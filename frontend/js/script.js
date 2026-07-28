@@ -10,6 +10,7 @@ const btnAcoes = document.getElementById("btnAcoes");
 const btnConsultar = document.getElementById("btnConsultar");
 const btnMeusRascunhos = document.getElementById("btnMeusRascunhos");
 const btnComite = document.getElementById("btnComite");
+const btnAndamento = document.getElementById("btnAndamento");
 
 const btnDetalharSelecionada = document.getElementById("btnDetalharSelecionada");
 const btnVoltarHero = document.getElementById("btnVoltarHero");
@@ -20,6 +21,7 @@ const btnEnviarComite = document.getElementById("btnEnviarComite");
 const btnVoltarAcoes = document.getElementById("btnVoltarAcoes");
 const btnVoltarAcoesDaConsulta = document.getElementById("btnVoltarAcoesDaConsulta");
 const btnVoltarAcoesDoComite = document.getElementById("btnVoltarAcoesDoComite");
+const btnVoltarAcoesDoAndamento = document.getElementById("btnVoltarAcoesDoAndamento");
 
 const corpoTabelaAcoes = document.getElementById("acoesTableBody");
 const corpoTabelaRegistros = document.getElementById("registroTableBody");
@@ -44,6 +46,13 @@ const comiteFiltros = document.getElementById("comiteFiltros");
 const modalAvaliacao = document.getElementById("modalAvaliacao");
 const modalAvaliacaoBody = document.getElementById("modalAvaliacaoBody");
 const closeModalAvaliacao = document.getElementById("closeModalAvaliacao");
+
+const andamentoView = document.getElementById("andamentoView");
+const andamentoKpiGrid = document.getElementById("andamentoKpiGrid");
+const andamentoGrafico = document.getElementById("andamentoGrafico");
+const andamentoRankingBody = document.getElementById("andamentoRankingBody");
+const andamentoFiltroPrazo = document.getElementById("andamentoFiltroPrazo");
+const andamentoFiltroResponsavel = document.getElementById("andamentoFiltroResponsavel");
 
 // ==========================================================================
 // 2. ESTADO DO SISTEMA
@@ -143,6 +152,7 @@ btnAcoes.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     renderizarTabelaAcoes();
 };
 
@@ -152,6 +162,7 @@ if (btnVoltarHero) btnVoltarHero.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     limparSelecao();
 };
 
@@ -162,6 +173,7 @@ btnConsultar.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "block";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     modoVisualizacao = "geral";
     atualizarTabelaRegistros();
 };
@@ -172,6 +184,7 @@ btnVoltarAcoesDaConsulta.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     renderizarTabelaAcoes();
 };
 
@@ -182,6 +195,7 @@ btnMeusRascunhos.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "block";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     modoVisualizacao = "meus_rascunhos";
     atualizarTabelaRegistros();
 };
@@ -194,6 +208,7 @@ if (btnComite) {
         acoesTableContainer.style.display = "none";
         formulario.style.display = "none";
         tabelaRegistros.style.display = "none";
+        if (andamentoView) andamentoView.style.display = "none";
         comiteView.style.display = "block";
         renderizarPainelComite();
     };
@@ -219,6 +234,7 @@ if (brandClick) {
         formulario.style.display = "none";
         tabelaRegistros.style.display = "none";
         if (comiteView) comiteView.style.display = "none";
+        if (andamentoView) andamentoView.style.display = "none";
         limparSelecao();
     };
 }
@@ -236,6 +252,185 @@ function atualizarBotaoFlutuante() {
     } else {
         floatingBtn.classList.remove('visible');
     }
+}
+
+// ==========================================================================
+// 5.1 PAINEL DE ANDAMENTO (progresso por matriz, estilo painel municipal)
+// ==========================================================================
+
+// Extrai o código da "matriz" a partir do id de uma ação (ex: "AE 1.1.1.2" -> "AE 1.1.1").
+function obterMatrizId(idAcao) {
+    return idAcao.replace(/\.\d+$/, '');
+}
+
+// Um registro conta como aprovação de uma ação se o registro está com status "Aprovado"
+// e a ação está entre as vinculadas a ele.
+function obterIdsAcoesAprovadas() {
+    const idsAprovados = new Set();
+    registros
+        .filter(r => r.status === "Aprovado")
+        .forEach(r => {
+            (r.acoesEstrategicas || []).forEach(a => idsAprovados.add(a.id));
+        });
+    return idsAprovados;
+}
+
+function obterResponsaveisUnicos() {
+    const todasAcoes = window.acoesEstrategicas || [];
+    const responsaveis = new Set();
+    todasAcoes.forEach(a => {
+        (a.responsavel || "").split(",").forEach(r => {
+            const nome = r.trim();
+            if (nome) responsaveis.add(nome);
+        });
+    });
+    return Array.from(responsaveis).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function popularFiltrosAndamento() {
+    if (!andamentoFiltroResponsavel || andamentoFiltroResponsavel.dataset.populado) return;
+    obterResponsaveisUnicos().forEach(nome => {
+        const opt = document.createElement('option');
+        opt.value = nome;
+        opt.textContent = nome;
+        andamentoFiltroResponsavel.appendChild(opt);
+    });
+    andamentoFiltroResponsavel.dataset.populado = "true";
+}
+
+function obterAcoesFiltradasAndamento() {
+    const todasAcoes = window.acoesEstrategicas || [];
+    const prazo = andamentoFiltroPrazo ? andamentoFiltroPrazo.value : "Todos";
+    const responsavel = andamentoFiltroResponsavel ? andamentoFiltroResponsavel.value : "Todos";
+
+    return todasAcoes.filter(a => {
+        const passaPrazo = prazo === "Todos" || a.prazo === prazo;
+        const passaResponsavel = responsavel === "Todos" ||
+            (a.responsavel || "").split(",").map(r => r.trim()).includes(responsavel);
+        return passaPrazo && passaResponsavel;
+    });
+}
+
+// Agrupa as ações (já filtradas) por matriz e calcula total/aprovadas/% de cada uma,
+// ordenado da matriz mais completa para a menos completa.
+function calcularAndamentoPorMatriz(acoesFiltradas) {
+    const idsAprovados = obterIdsAcoesAprovadas();
+    const porMatriz = {};
+
+    acoesFiltradas.forEach(a => {
+        const matrizId = obterMatrizId(a.id);
+        if (!porMatriz[matrizId]) {
+            porMatriz[matrizId] = { matrizId, total: 0, aprovadas: 0 };
+        }
+        porMatriz[matrizId].total += 1;
+        if (idsAprovados.has(a.id)) porMatriz[matrizId].aprovadas += 1;
+    });
+
+    const lista = Object.values(porMatriz).map(m => ({
+        ...m,
+        percentual: Math.round((m.aprovadas / m.total) * 1000) / 10
+    }));
+
+    lista.sort((a, b) => b.percentual - a.percentual || b.total - a.total);
+    return lista;
+}
+
+function renderizarKpisAndamento(acoesFiltradas) {
+    const idsAprovados = obterIdsAcoesAprovadas();
+    const total = acoesFiltradas.length;
+    const aprovadas = acoesFiltradas.filter(a => idsAprovados.has(a.id)).length;
+    const percentual = total === 0 ? 0 : Math.round((aprovadas / total) * 1000) / 10;
+    const matrizesEnvolvidas = new Set(acoesFiltradas.map(a => obterMatrizId(a.id))).size;
+
+    andamentoKpiGrid.innerHTML = `
+        <div class="andamento-kpi-card">
+            <span class="andamento-kpi-numero">${total}</span>
+            <span class="andamento-kpi-label">Ações no filtro</span>
+        </div>
+        <div class="andamento-kpi-card">
+            <span class="andamento-kpi-numero">${aprovadas}</span>
+            <span class="andamento-kpi-label">Ações aprovadas</span>
+        </div>
+        <div class="andamento-kpi-card">
+            <span class="andamento-kpi-numero">${matrizesEnvolvidas}</span>
+            <span class="andamento-kpi-label">Matrizes envolvidas</span>
+        </div>
+        <div class="andamento-kpi-card">
+            <span class="andamento-kpi-numero">${percentual}%</span>
+            <span class="andamento-kpi-label">Progresso geral</span>
+        </div>
+    `;
+}
+
+function renderizarGraficoAndamento(andamentoPorMatriz) {
+    if (andamentoPorMatriz.length === 0) {
+        andamentoGrafico.innerHTML = `<div class="andamento-empty-state">Nenhuma ação encontrada para este filtro.</div>`;
+        return;
+    }
+
+    andamentoGrafico.innerHTML = andamentoPorMatriz.map(m => `
+        <div class="andamento-barra-linha">
+            <span>${escaparTexto(m.matrizId)}</span>
+            <div class="andamento-barra-trilho">
+                <div class="andamento-barra-preenchimento" style="width: ${m.percentual}%;"></div>
+            </div>
+            <span class="andamento-barra-percentual">${m.percentual}%</span>
+        </div>
+    `).join('');
+}
+
+function renderizarRankingAndamento(andamentoPorMatriz) {
+    if (andamentoPorMatriz.length === 0) {
+        andamentoRankingBody.innerHTML = `<tr><td colspan="5" class="table-empty-state">Nenhuma ação encontrada para este filtro.</td></tr>`;
+        return;
+    }
+
+    andamentoRankingBody.innerHTML = andamentoPorMatriz.map((m, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td><strong>${escaparTexto(m.matrizId)}</strong></td>
+            <td>${m.total}</td>
+            <td>${m.aprovadas}</td>
+            <td>${m.percentual}%</td>
+        </tr>
+    `).join('');
+}
+
+function renderizarAndamento() {
+    if (!andamentoView) return;
+
+    popularFiltrosAndamento();
+
+    const acoesFiltradas = obterAcoesFiltradasAndamento();
+    const andamentoPorMatriz = calcularAndamentoPorMatriz(acoesFiltradas);
+
+    renderizarKpisAndamento(acoesFiltradas);
+    renderizarGraficoAndamento(andamentoPorMatriz);
+    renderizarRankingAndamento(andamentoPorMatriz);
+}
+
+if (andamentoFiltroPrazo) andamentoFiltroPrazo.onchange = renderizarAndamento;
+if (andamentoFiltroResponsavel) andamentoFiltroResponsavel.onchange = renderizarAndamento;
+
+if (btnAndamento) {
+    btnAndamento.onclick = () => {
+        heroSection.style.display = "none";
+        acoesTableContainer.style.display = "none";
+        formulario.style.display = "none";
+        tabelaRegistros.style.display = "none";
+        if (comiteView) comiteView.style.display = "none";
+        andamentoView.style.display = "block";
+        renderizarAndamento();
+    };
+}
+
+if (btnVoltarAcoesDoAndamento) {
+    btnVoltarAcoesDoAndamento.onclick = () => {
+        heroSection.style.display = "none";
+        acoesTableContainer.style.display = "block";
+        andamentoView.style.display = "none";
+        renderizarTabelaAcoes();
+    };
 }
 
 function renderizarTabelaAcoes() {
@@ -301,6 +496,7 @@ btnDetalhar.onclick = () => {
     formulario.style.display = "block";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
 
     floatingBtn.classList.remove('visible');
 };
@@ -349,6 +545,7 @@ btnVoltarAcoes.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     limparFormulario();
     renderizarTabelaAcoes();
 };
@@ -533,6 +730,7 @@ btnEnviarComite.onclick = async () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     limparFormulario();
     renderizarTabelaAcoes();
 };
@@ -959,6 +1157,7 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     });
 
     renderizarPainelComite();
+    if (andamentoView && andamentoView.style.display === "block") renderizarAndamento();
     if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
 };
 
@@ -1053,6 +1252,7 @@ window.editarRegistro = function(id) {
     formulario.style.display = "block";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
 
     Swal.fire({
         icon: registro.status === 'Pendente' ? 'warning' : 'info',
@@ -1156,5 +1356,6 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.style.display = 'none';
     tabelaRegistros.style.display = 'none';
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     atualizarVisibilidadeMenu();
 });
