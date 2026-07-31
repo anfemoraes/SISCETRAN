@@ -10,6 +10,7 @@ const btnAcoes = document.getElementById("btnAcoes");
 const btnConsultar = document.getElementById("btnConsultar");
 const btnMeusRascunhos = document.getElementById("btnMeusRascunhos");
 const btnComite = document.getElementById("btnComite");
+const btnAndamento = document.getElementById("btnAndamento");
 
 const btnDetalharSelecionada = document.getElementById("btnDetalharSelecionada");
 const btnVoltarHero = document.getElementById("btnVoltarHero");
@@ -20,6 +21,7 @@ const btnEnviarComite = document.getElementById("btnEnviarComite");
 const btnVoltarAcoes = document.getElementById("btnVoltarAcoes");
 const btnVoltarAcoesDaConsulta = document.getElementById("btnVoltarAcoesDaConsulta");
 const btnVoltarAcoesDoComite = document.getElementById("btnVoltarAcoesDoComite");
+const btnVoltarAcoesDoAndamento = document.getElementById("btnVoltarAcoesDoAndamento");
 
 const corpoTabelaAcoes = document.getElementById("acoesTableBody");
 const corpoTabelaRegistros = document.getElementById("registroTableBody");
@@ -45,6 +47,8 @@ const modalAvaliacao = document.getElementById("modalAvaliacao");
 const modalAvaliacaoBody = document.getElementById("modalAvaliacaoBody");
 const closeModalAvaliacao = document.getElementById("closeModalAvaliacao");
 
+const andamentoView = document.getElementById("andamentoView");
+
 // ==========================================================================
 // 2. ESTADO DO SISTEMA
 // ==========================================================================
@@ -64,16 +68,26 @@ function carregarBanco() {
     const dadosSalvos = JSON.parse(localStorage.getItem(DB_KEY));
     const registrosLegados = JSON.parse(localStorage.getItem("registros"));
 
+    // Lista de usuários para testar o Front
+    const usuariosMock = [
+        { email: "usuario@email.com", senha: "usuario123", role: "usuario" },
+        { email: "comite@email.com", senha: "comite123", role: "comite" },
+        { email: "admin@email.com", senha: "admin123", role: "admin" }
+    ];
+
+    // Se já existem dados no navegador da época do backend real
     if (dadosSalvos && Array.isArray(dadosSalvos.registros)) {
+        // Injeta os usuários mockados à força se o array de usuários estiver vazio ou quebrado
+        if (!dadosSalvos.usuarios || dadosSalvos.usuarios.length === 0) {
+            dadosSalvos.usuarios = usuariosMock;
+            localStorage.setItem(DB_KEY, JSON.stringify(dadosSalvos));
+        }
         return dadosSalvos;
     }
 
+    // Se for o primeiro acesso limpo
     const bancoInicial = {
-        usuarios: [
-            { email: "usuario@email.com", senha: "usuario123", role: "usuario" },
-            { email: "comite@email.com", senha: "comite123", role: "comite" },
-            { email: "admin@email.com", senha: "admin123", role: "admin" }
-        ],
+        usuarios: usuariosMock,
         registros: Array.isArray(registrosLegados) ? registrosLegados : []
     };
 
@@ -118,6 +132,10 @@ function atualizarVisibilidadeMenu() {
     if (btnComite) {
         btnComite.style.display = ehComiteOuAdmin() ? "inline-flex" : "none";
     }
+    const btnAdminGeral = document.getElementById("btnAdminGeral");
+    if (btnAdminGeral) {
+        btnAdminGeral.style.display = (usuarioLogado && usuarioLogado.role === 'admin') ? "inline-flex" : "none";
+    }
 }
 
 function exigirLogin() {
@@ -143,6 +161,8 @@ btnAcoes.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
+    if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
     renderizarTabelaAcoes();
 };
 
@@ -152,6 +172,8 @@ if (btnVoltarHero) btnVoltarHero.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
+    if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
     limparSelecao();
 };
 
@@ -162,6 +184,8 @@ btnConsultar.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "block";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
+    if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
     modoVisualizacao = "geral";
     atualizarTabelaRegistros();
 };
@@ -172,6 +196,7 @@ btnVoltarAcoesDaConsulta.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     renderizarTabelaAcoes();
 };
 
@@ -182,6 +207,8 @@ btnMeusRascunhos.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "block";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
+    if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
     modoVisualizacao = "meus_rascunhos";
     atualizarTabelaRegistros();
 };
@@ -194,6 +221,8 @@ if (btnComite) {
         acoesTableContainer.style.display = "none";
         formulario.style.display = "none";
         tabelaRegistros.style.display = "none";
+        if (andamentoView) andamentoView.style.display = "none";
+        if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
         comiteView.style.display = "block";
         renderizarPainelComite();
     };
@@ -219,18 +248,15 @@ if (brandClick) {
         formulario.style.display = "none";
         tabelaRegistros.style.display = "none";
         if (comiteView) comiteView.style.display = "none";
+        if (andamentoView) andamentoView.style.display = "none";
+        if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
         limparSelecao();
     };
 }
 
-// ==========================================================================
-// 5. CONTROLE DO BOTÃO FLUTUANTE E RENDERIZAÇÃO
-// ==========================================================================
-const floatingBtn = document.getElementById('floatingDetalharBtn');
-const btnDetalhar = document.getElementById('btnDetalharSelecionada');
-
 function atualizarBotaoFlutuante() {
     const checkboxes = document.querySelectorAll('.acao-checkbox:checked');
+    const floatingBtn = document.getElementById('floatingDetalharBtn');
     if (checkboxes.length > 0) {
         floatingBtn.classList.add('visible');
     } else {
@@ -240,6 +266,7 @@ function atualizarBotaoFlutuante() {
 
 function renderizarTabelaAcoes() {
     corpoTabelaAcoes.innerHTML = "";
+    const floatingBtn = document.getElementById('floatingDetalharBtn');
 
     if (!window.acoesEstrategicas || window.acoesEstrategicas.length === 0) {
         corpoTabelaAcoes.innerHTML = `<tr><td colspan="7" class="table-empty-state">Nenhuma ação estratégica encontrada</td></tr>`;
@@ -248,16 +275,18 @@ function renderizarTabelaAcoes() {
 
     window.acoesEstrategicas.forEach((acao) => {
         const linha = document.createElement("tr");
+        const prazoTexto = acao.prazo || "Não informado";
+        const prazoSlug = slugificar(prazoTexto);
         linha.innerHTML = `
             <td style="text-align: center;">
                 <input type="checkbox" class="acao-checkbox" value="${acao.id}">
             </td>
             <td><strong>${acao.id}</strong></td>
-            <td>${acao.diretriz}</td>
-            <td><span class="badge-${acao.prazo.toLowerCase()}">${acao.prazo}</span></td>
-            <td>${acao.meta}</td>
-            <td>${acao.indicador}</td>
-            <td>${acao.responsavel}</td>
+            <td>${escaparTexto(acao.diretriz)}</td>
+            <td><span class="badge-${prazoSlug}">${escaparTexto(prazoTexto)}</span></td>
+            <td>${escaparTexto(acao.meta)}</td>
+            <td>${escaparTexto(acao.indicador)}</td>
+            <td>${escaparTexto(acao.setor || "Não informado")}</td>
         `;
         corpoTabelaAcoes.appendChild(linha);
     });
@@ -268,13 +297,10 @@ function renderizarTabelaAcoes() {
         };
     });
 
-    floatingBtn.classList.remove('visible');
+    if (floatingBtn) floatingBtn.classList.remove('visible');
 }
 
-// ==========================================================================
-// 6. DETALHAR MÚLTIPLAS AÇÕES SELECIONADAS
-// ==========================================================================
-btnDetalhar.onclick = () => {
+btnDetalharSelecionada.onclick = () => {
     if (!exigirLogin()) return;
     
     const checkboxes = document.querySelectorAll('.acao-checkbox:checked');
@@ -301,13 +327,12 @@ btnDetalhar.onclick = () => {
     formulario.style.display = "block";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
 
-    floatingBtn.classList.remove('visible');
+    const floatingBtn = document.getElementById('floatingDetalharBtn');
+    if (floatingBtn) floatingBtn.classList.remove('visible');
 };
 
-// ==========================================================================
-// 7. FUNÇÕES DO FORMULÁRIO (MULTI-AÇÃO)
-// ==========================================================================
 function preencherFormularioComAcoes(acoes) {
     idRegistroSendoEditado = null;
 
@@ -349,6 +374,7 @@ btnVoltarAcoes.onclick = () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     limparFormulario();
     renderizarTabelaAcoes();
 };
@@ -382,9 +408,6 @@ function gerarEstruturaAcoesVinculadas(acoes) {
     }));
 }
 
-// ==========================================================================
-// 8. OPERAÇÕES DO FORMULÁRIO (SALVAR E ENVIAR)
-// ==========================================================================
 btnSalvarRascunho.onclick = async () => {
     if (!exigirLogin()) return;
 
@@ -533,13 +556,11 @@ btnEnviarComite.onclick = async () => {
     formulario.style.display = "none";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     limparFormulario();
     renderizarTabelaAcoes();
 };
 
-// ==========================================================================
-// 9. TABELA DE REGISTROS (CONSULTA VISUAL E GERENCIAMENTO)
-// ==========================================================================
 function atualizarTabelaRegistros() {
     corpoTabelaRegistros.innerHTML = "";
 
@@ -549,6 +570,8 @@ function atualizarTabelaRegistros() {
 
     if (modoVisualizacao === "meus_rascunhos" && usuarioLogado) {
         dadosFiltrados = registros.filter(r => r.criadoPor === usuarioLogado.email && (r.status === "Rascunho" || r.status === "Pendente"));
+    } else if (modoVisualizacao === "geral") {
+        dadosFiltrados = registros.filter(r => r.status !== "Rascunho");
     }
 
     if (dadosFiltrados.length === 0) {
@@ -560,12 +583,21 @@ function atualizarTabelaRegistros() {
         const linha = document.createElement("tr");
         let botoesAcao = "";
 
-        // Lógica de permissões:
-        // 1. Comitê: vê botões de Aprovar/Reprovar apenas em registros "Enviado".
-        // 2. Usuário dono do Rascunho: vê botões de Editar/Excluir APENAS no modo "meus_rascunhos".
-        // 3. Consulta Geral (btnConsultar): Apenas visualização para usuários comuns.
-
-        if (esComite) {
+        // CORREÇÃO AQUI: Se estiver em "Meus Rascunhos" e for o dono, mostra os botões SEMPRE.
+        if (modoVisualizacao === "meus_rascunhos" && registro.criadoPor === usuarioLogado?.email && (registro.status === "Rascunho" || registro.status === "Pendente")) {
+            botoesAcao = `
+                <button onclick="enviarRegistroDireto('${registro.id}')" class="button-editar" style="color: #16a34a;" title="Enviar para Comitê">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            `;
+        } else if (esComite) {
+            // Lógica do Comitê visualizando a tabela geral
             if (registro.status === "Enviado") {
                 botoesAcao = `
                     <button onclick="avaliarAcao('${registro.id}', 'Aprovado')" class="button-aprovar" title="Aprovar">Aprovar</button>
@@ -573,40 +605,23 @@ function atualizarTabelaRegistros() {
                 `;
             } else if (registro.status === "Pendente") {
                 botoesAcao = `<span class="table-status-text">Devolvido para correção</span>`;
+            } else if (registro.status === "Rascunho") {
+                botoesAcao = `<span class="table-status-text">Ainda não enviado</span>`;
             } else {
                 botoesAcao = `<span class="table-status-text">Avaliado</span>`;
             }
         } else {
-            // Usuário comum
-           if (modoVisualizacao === "meus_rascunhos" && registro.criadoPor === usuarioLogado?.email && (registro.status === "Rascunho" || registro.status === "Pendente")) {
-
-    botoesAcao = `
-        <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
-            <i class="bi bi-pencil-square"></i>
-        </button>
-
-        <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir">
-            <i class="bi bi-trash3-fill"></i>
-        </button>
-    `;
-
-} else {
-
-    const rotulos = { 'Rascunho': 'Rascunho', 'Pendente': 'Correção Solicitada', 'Enviado': 'Em Análise', 'Aprovado': 'Em Análise' };
-    botoesAcao = `<span class="table-status-text">${rotulos[registro.status] || 'Em Análise'}</span>`;
-
-}
+            // Usuário comum visualizando a tabela geral
+            const rotulos = { 'Rascunho': 'Rascunho', 'Pendente': 'Correção Solicitada', 'Enviado': 'Em Análise', 'Aprovado': 'Em Análise' };
+            botoesAcao = `<span class="table-status-text">${rotulos[registro.status] || 'Em Análise'}</span>`;
         }
 
-        // Renderização das Ações Vinculadas (Compatibilidade)
         let colunaAcoes = "";
         if (registro.acoesEstrategicas && Array.isArray(registro.acoesEstrategicas)) {
-            // Novo formato
             colunaAcoes = registro.acoesEstrategicas.map(a => 
                 `<div><strong>${a.id}</strong> ${a.diretriz}</div>`
             ).join('');
         } else if (registro.acaoEstrategicaId) {
-            // Formato antigo
             colunaAcoes = `<div><strong>${registro.acaoEstrategicaId}</strong> ${registro.acaoEstrategicaDiretriz || ''}</div>`;
         } else {
             colunaAcoes = "-";
@@ -627,9 +642,6 @@ function atualizarTabelaRegistros() {
     });
 }
 
-// ==========================================================================
-// 10. AÇÕES DO COMITÊ E UTILITÁRIOS
-// ==========================================================================
 window.avaliarAcao = async function(id, novoStatus) {
     const index = registros.findIndex(reg => reg.id === id);
     if (index === -1) return;
@@ -653,8 +665,6 @@ window.avaliarAcao = async function(id, novoStatus) {
 
     if (parecer === null) return;
 
-    // Ao reprovar, o registro volta para o solicitante como "Pendente" (correção necessária),
-    // em vez de ficar travado permanentemente como "Reprovado".
     const statusFinal = novoStatus === 'Reprovado' ? 'Pendente' : novoStatus;
 
     registros[index].status = statusFinal;
@@ -693,11 +703,6 @@ function formatarImpacto(impacto) {
     return cores[impacto] || impacto;
 }
 
-// ==========================================================================
-// 12. PAINEL DEDICADO DE AVALIAÇÃO DO COMITÊ
-// ==========================================================================
-
-// Escapa texto simples para evitar quebra de HTML/XSS ao exibir dados no painel.
 function escaparTexto(texto) {
     if (texto === null || texto === undefined) return "";
     return String(texto)
@@ -706,6 +711,15 @@ function escaparTexto(texto) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+}
+
+function slugificar(texto) {
+    if (!texto) return "nao-informado";
+    return String(texto)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-");
 }
 
 function obterAcoesVinculadasTexto(registro) {
@@ -751,7 +765,6 @@ function renderizarCardsComite() {
         dadosFiltrados = registros.filter(r => r.status === filtroComiteAtual);
     }
 
-    // Mais recentes primeiro
     dadosFiltrados = [...dadosFiltrados].reverse();
 
     if (dadosFiltrados.length === 0) {
@@ -807,7 +820,6 @@ if (comiteFiltros) {
     });
 }
 
-// Abre o modal com o detalhamento completo (5W2H) de uma ação para análise do comitê.
 window.abrirDetalheAvaliacao = function(id) {
     const registro = registros.find(reg => reg.id === id);
     if (!registro) return;
@@ -898,7 +910,6 @@ window.abrirDetalheAvaliacao = function(id) {
     modalAvaliacao.style.display = 'flex';
 };
 
-// Confirma a decisão do comitê a partir do parecer digitado dentro do modal de detalhe.
 window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     const textarea = document.getElementById('modalParecerInput');
     const parecer = textarea ? textarea.value.trim() : "";
@@ -929,8 +940,6 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     const index = registros.findIndex(reg => reg.id === id);
     if (index === -1) return;
 
-    // Ao reprovar, o registro volta para o solicitante como "Pendente" (correção necessária),
-    // em vez de ficar travado permanentemente como "Reprovado".
     const statusFinal = novoStatus === 'Reprovado' ? 'Pendente' : novoStatus;
 
     registros[index].status = statusFinal;
@@ -953,6 +962,7 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     });
 
     renderizarPainelComite();
+    if (andamentoView && andamentoView.style.display === "block") renderizarAndamento();
     if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
 };
 
@@ -1047,6 +1057,7 @@ window.editarRegistro = function(id) {
     formulario.style.display = "block";
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
 
     Swal.fire({
         icon: registro.status === 'Pendente' ? 'warning' : 'info',
@@ -1056,6 +1067,53 @@ window.editarRegistro = function(id) {
             : 'Modifique as informações.',
         confirmButtonColor: '#2563eb'
     });
+};
+
+window.enviarRegistroDireto = async function(id) {
+    const index = registros.findIndex(reg => reg.id === id);
+    if (index === -1) return;
+
+    const reg = registros[index];
+    
+    if (!reg.oque || !reg.porque || !reg.como || !reg.quando || !reg.onde || !reg.impacto) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Rascunho incompleto',
+            text: 'Este rascunho possui campos obrigatórios em branco. Clique em "Editar" para preenchê-los antes de enviar.',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
+    const result = await Swal.fire({
+        title: 'Confirmar envio',
+        text: 'Deseja enviar este rascunho diretamente para avaliação do comitê?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, enviar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        registros[index].status = "Enviado";
+        registros[index].comentarioComite = "-";
+        registros[index].avaliadoPor = null;
+        registros[index].dataAvaliacao = null;
+        
+        salvarBanco();
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Enviado!',
+            text: 'Sua ação foi enviada para o Comitê com sucesso.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        
+        atualizarTabelaRegistros();
+    }
 };
 
 // ==========================================================================
@@ -1150,5 +1208,201 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.style.display = 'none';
     tabelaRegistros.style.display = 'none';
     if (comiteView) comiteView.style.display = "none";
+    if (andamentoView) andamentoView.style.display = "none";
     atualizarVisibilidadeMenu();
 });
+
+// ==========================================================================
+// LÓGICA DO PAINEL DO ADMINISTRADOR (FRONTEND MOCK)
+// ==========================================================================
+const btnAdminGeral = document.getElementById("btnAdminGeral");
+const adminView = document.getElementById("adminView");
+const btnVoltarAcoesDoAdmin = document.getElementById("btnVoltarAcoesDoAdmin");
+
+if (btnAdminGeral) {
+    btnAdminGeral.onclick = () => {
+        if (!exigirLogin() || usuarioLogado.role !== 'admin') return;
+        
+        document.getElementById("heroSection").style.display = "none";
+        document.getElementById("acoesTableContainer").style.display = "none";
+        document.getElementById("formularioContainer").style.display = "none";
+        document.getElementById("registroView").style.display = "none";
+        if (document.getElementById("comiteView")) document.getElementById("comiteView").style.display = "none";
+        if (document.getElementById("andamentoView")) document.getElementById("andamentoView").style.display = "none";
+        
+        adminView.style.display = "block";
+        renderizarTabelaAdminUsuarios();
+    };
+}
+
+if (btnVoltarAcoesDoAdmin) {
+    btnVoltarAcoesDoAdmin.onclick = () => {
+        adminView.style.display = "none";
+        document.getElementById("acoesTableContainer").style.display = "block";
+        renderizarTabelaAcoes();
+    };
+}
+
+const adminTabs = document.querySelectorAll("#adminTabs .filtro-btn");
+const adminTabContents = document.querySelectorAll(".admin-tab-content");
+
+adminTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        adminTabs.forEach(t => t.classList.remove("active"));
+        adminTabContents.forEach(c => c.style.display = "none");
+        
+        tab.classList.add("active");
+        const targetId = tab.getAttribute("data-tab");
+        document.getElementById(targetId).style.display = "block";
+
+        if (targetId === "tabAdminAcoes") {
+            renderizarTabelaAdminAcoes();
+        }
+    });
+});
+
+function renderizarTabelaAdminUsuarios() {
+    const tbody = document.getElementById("adminUsuariosBody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    
+    db.usuarios.forEach((u) => {
+        const linha = document.createElement("tr");
+        let badgeClasse = "badge-rascunho";
+        let nomePerfil = "Usuário Comum";
+        
+        if(u.role === "admin") { badgeClasse = "badge-reprovado"; nomePerfil = "Administrador"; }
+        if(u.role === "comite") { badgeClasse = "badge-enviado"; nomePerfil = "Conselheiro"; }
+        
+        linha.innerHTML = `
+            <td><strong>${u.email}</strong></td>
+            <td><span class="${badgeClasse}" style="font-size: 0.7rem;">${nomePerfil}</span></td>
+            <td>
+                <button class="button-editar" title="Editar Usuário" onclick="alert('Requer Backend')"><i class="bi bi-pencil-square"></i></button>
+                <button class="button-excluir" title="Excluir Usuário" onclick="alert('Requer Backend')"><i class="bi bi-trash3-fill"></i></button>
+            </td>
+        `;
+        tbody.appendChild(linha);
+    });
+}
+
+function renderizarTabelaAdminAcoes() {
+    const tbody = document.getElementById("adminAcoesBody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    const acoes = window.acoesEstrategicas || [];
+
+    if (acoes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="table-empty-state">Nenhuma ação base cadastrada.</td></tr>`;
+        return;
+    }
+
+    const acoesExibicao = [...acoes].reverse();
+
+    acoesExibicao.forEach(acao => {
+        const linha = document.createElement("tr");
+        const prazoTexto = acao.prazo || "Não informado";
+        let badgePrazo = "badge-rascunho"; 
+        
+        if (prazoTexto.includes("Curto")) badgePrazo = "badge-aprovado";
+        if (prazoTexto.includes("Médio")) badgePrazo = "badge-enviado";
+        if (prazoTexto.includes("Longo")) badgePrazo = "badge-reprovado";
+
+        linha.innerHTML = `
+            <td><strong>${acao.id}</strong></td>
+            <td title="${acao.diretriz}">${acao.diretriz.length > 60 ? acao.diretriz.substring(0, 60) + "..." : acao.diretriz}</td>
+            <td><span class="${badgePrazo}" style="padding: 4px 8px; font-size: 0.7rem;">${prazoTexto}</span></td>
+            <td>${acao.setor || "Não informado"}</td>
+            <td style="white-space: nowrap;">
+                <button class="button-editar" title="Editar Ação" onclick="alert('Edição requer backend')"><i class="bi bi-pencil-square"></i></button>
+                <button class="button-excluir" title="Excluir Ação" onclick="excluirAcaoBase('${acao.id}')"><i class="bi bi-trash3-fill"></i></button>
+            </td>
+        `;
+        tbody.appendChild(linha);
+    });
+}
+
+const modalAdminNovaAcao = document.getElementById("modalAdminNovaAcao");
+const btnNovaAcaoAdmin = document.getElementById("btnNovaAcaoAdmin");
+const closeModalAdminAcao = document.getElementById("closeModalAdminAcao");
+const formAdminAcao = document.getElementById("formAdminAcao");
+
+if (btnNovaAcaoAdmin) {
+    btnNovaAcaoAdmin.onclick = () => {
+        formAdminAcao.reset();
+        modalAdminNovaAcao.style.display = "flex";
+    };
+}
+
+if (closeModalAdminAcao) {
+    closeModalAdminAcao.onclick = () => {
+        modalAdminNovaAcao.style.display = "none";
+    };
+}
+
+if (modalAdminNovaAcao) {
+    modalAdminNovaAcao.addEventListener('click', (e) => {
+        if (e.target === modalAdminNovaAcao) modalAdminNovaAcao.style.display = 'none';
+    });
+}
+
+if (formAdminAcao) {
+    formAdminAcao.onsubmit = (e) => {
+        e.preventDefault();
+        
+        const novaAcao = {
+            id: document.getElementById("adminAcaoId").value.trim(),
+            diretriz: document.getElementById("adminAcaoDiretriz").value.trim(),
+            lae: document.getElementById("adminAcaoLae").value.trim(),
+            og: document.getElementById("adminAcaoOg").value.trim(),
+            prazo: document.getElementById("adminAcaoPrazo").value,
+            setor: document.getElementById("adminAcaoSetor").value.trim(),
+            meta: "Não definida",
+            indicador: "Não definido",
+            restricoes: "",
+            dadosIncompletos: []
+        };
+
+        window.acoesEstrategicas.push(novaAcao);
+        
+        modalAdminNovaAcao.style.display = "none";
+        renderizarTabelaAdminAcoes();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Ação Adicionada!',
+            text: 'A ação foi injetada no sistema e já está disponível para testes.',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    };
+}
+
+window.excluirAcaoBase = function(id) {
+    Swal.fire({
+        title: 'Excluir Ação?',
+        text: "Esta ação será removida da lista em memória.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const index = window.acoesEstrategicas.findIndex(a => a.id === id);
+            if (index > -1) {
+                window.acoesEstrategicas.splice(index, 1);
+                renderizarTabelaAdminAcoes();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Excluída!',
+                    text: 'Ação removida com sucesso.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        }
+    });
+}

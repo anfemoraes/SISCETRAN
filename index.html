@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISCETRAN - Ações Estratégicas</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="js/acoes_data.js"></script>
     <script src="js/script.js" defer></script>
+    <script src="js/filters.js" defer></script>
+    <script src="js/charts.js" defer></script>
+    <script src="js/dashboard.js" defer></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
 
     <header class="header">
-        <!-- Div estrutural extra para ajudar no balanceamento da centralização no desktop -->
         <div class="header-spacer" style="width: 100px; display: none;"></div>
         
         <div class="header-brand">
@@ -44,7 +48,6 @@
     </header>
 
     <main>
-        <!-- Hero Section -->
         <section class="hero-section" id="heroSection">
             <img class="background-image" src="assets/background.png" alt="Imagem de Fundo">
             <div class="hero-text">
@@ -53,7 +56,6 @@
             </div>
         </section>
       
-        <!-- Menu principal com Ícones Estilizados SVG -->
         <div class="container actions-menu">
             <button class="button" id="btnAcoes">
                 <svg class="icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; display: inline-block; vertical-align: middle;">
@@ -67,7 +69,13 @@
                 </svg>
                 <span>Consultar Ações Detalhadas</span>
             </button>
-            <button class="button button-outline" id="btnMeusRascunhos" style="display: none;">
+            <button class="button btnPainel" id="btnAndamento">
+                <svg class="icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; display: inline-block; vertical-align: middle;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span>Painel de dados</span>
+            </button>
+            <button class="button btnPainel" id="btnMeusRascunhos" style="display: none;">
                 <svg class="icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; display: inline-block; vertical-align: middle;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
@@ -79,9 +87,15 @@
                 </svg>
                 <span>Avaliação do Comitê</span>
             </button>
+            <button class="button button-admin" id="btnAdminGeral" style="display: none;">
+                <svg class="icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; display: inline-block; vertical-align: middle;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>Administração</span>
+            </button>
         </div>
 
-        <!-- Tabela de Ações Estratégicas -->
         <section class="acoes-table-container" id="acoesTableContainer" style="display: none;">
             <h2>Ações Estratégicas do PETRANS</h2>
             <p style="color: var(--muted-foreground); margin-bottom: 1rem;">
@@ -97,7 +111,7 @@
                             <th>Prazo</th>
                             <th>Meta</th>
                             <th>Indicador</th>
-                            <th>Responsável</th>
+                            <th>Setor Responsável</th>
                         </tr>
                     </thead>
                     <tbody id="acoesTableBody">
@@ -111,7 +125,6 @@
             </div>
         </section>
 
-        <!-- Formulário de Detalhamento -->
         <section class="formulario-container" id="formularioContainer" style="display: none;">
             <h2>Detalhamento da Ação Estratégica</h2>
             
@@ -162,7 +175,6 @@
                     <textarea id="f_observacao" rows="4" placeholder="Digite observações adicionais sobre a ação..."></textarea>
                 </div>
 
-                <!-- Botões Inferiores com Ícones Modificados -->
                 <div class="actions">
                     <button type="button" class="button button-secondary" id="btnLimpar">
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.1rem; height: 1.1rem; margin-right: 0.4rem; display: inline-block; vertical-align: middle;">
@@ -192,7 +204,6 @@
             </form>
         </section>
 
-        <!-- Tabela de Ações Detalhadas (Painel de Consulta e Aprovação) -->
         <section id="registroView" style="padding: 20px; display: none;">
             <h2>Painel de Acompanhamento - Ações Detalhadas</h2>
             <div style="margin-bottom: 1rem;">
@@ -224,7 +235,6 @@
             </div>
         </section>
 
-        <!-- Painel Exclusivo de Avaliação do Comitê -->
         <section class="comite-container" id="comiteView" style="display: none;">
             <div class="comite-header">
                 <button class="button button-secondary" id="btnVoltarAcoesDoComite">
@@ -250,9 +260,280 @@
 
             <div class="comite-cards-grid" id="comiteCardsContainer"></div>
         </section>
+
+        <section class="dashboard-container" id="andamentoView" style="display: none;">
+            <div class="dashboard-header">
+                <button class="button button-secondary" id="btnVoltarAcoesDoAndamento">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.1rem; height: 1.1rem; margin-right: 0.4rem; display: inline-block; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>Voltar para Ações</span>
+                </button>
+                <div class="dashboard-header-title">
+                    <h2>Dashboard do Plano PETRANS</h2>
+                    <p class="dashboard-subtitle">Painel de gestão estratégica do Cetran/PA — Objetivo de Governo → Linha de Ação Estratégica → Ação Estratégica → Plano 5W2H → Comitê.</p>
+                </div>
+                <div class="dashboard-header-badge">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span>Fonte: Plano de Trabalho Cetran/PA 2030 (planilha oficial)</span>
+                </div>
+            </div>
+
+            <div class="dashboard-aviso-qualidade" id="dashboardAvisoQualidade" style="display:none;"></div>
+
+            <div class="dashboard-filtros" id="dashboardFiltros">
+                <div class="dashboard-filtro-item">
+                    <label for="filtroOG">Objetivo de Governo</label>
+                    <select id="filtroOG">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="dashboard-filtro-item">
+                    <label for="filtroLAE">Linha de Ação Estratégica</label>
+                    <select id="filtroLAE">
+                        <option value="Todos">Todas</option>
+                    </select>
+                </div>
+                <div class="dashboard-filtro-item">
+                    <label for="filtroAE">Ação Estratégica</label>
+                    <select id="filtroAE">
+                        <option value="Todos">Todas</option>
+                    </select>
+                </div>
+                <div class="dashboard-filtro-item">
+                    <label for="filtroSetor">Setor Responsável pela AE</label>
+                    <select id="filtroSetor">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="dashboard-filtro-item">
+                    <label for="filtroPrazo">Prazo</label>
+                    <select id="filtroPrazo">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="dashboard-filtro-item">
+                    <label for="filtroStatusAprovacao">Status da Aprovação</label>
+                    <select id="filtroStatusAprovacao">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <button type="button" class="button dashboard-filtro-limpar" id="btnLimparFiltrosDashboard">
+                    <i class="bi bi-arrow-counterclockwise"></i>&nbsp; Limpar
+                </button>
+            </div>
+
+            <div class="dashboard-kpi-grid" id="dashboardKpiGrid"></div>
+
+            <div class="dashboard-charts-grid">
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <h3>Status da Aprovação</h3>
+                        <span class="dashboard-chart-hint">Distribuição geral</span>
+                    </div>
+                    <div class="dashboard-chart-body"><canvas id="chartStatus"></canvas></div>
+                </div>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <h3>Setor Responsável pela AE</h3>
+                        <span class="dashboard-chart-hint">Distribuição por setor</span>
+                    </div>
+                    <div class="dashboard-chart-body"><canvas id="chartSetor"></canvas></div>
+                </div>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <h3>Prazo para Consecução da AE</h3>
+                        <span class="dashboard-chart-hint">Curto / Médio / Longo Prazo</span>
+                    </div>
+                    <div class="dashboard-chart-body"><canvas id="chartPrazo"></canvas></div>
+                </div>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <h3>Linha de Ação Estratégica</h3>
+                        <span class="dashboard-chart-hint">Ações por LAE</span>
+                    </div>
+                    <div class="dashboard-chart-body"><canvas id="chartLAE"></canvas></div>
+                </div>
+                <div class="dashboard-chart-card dashboard-chart-full">
+                    <div class="dashboard-chart-header">
+                        <h3>Objetivo de Governo</h3>
+                        <span class="dashboard-chart-hint">Ações por OG</span>
+                    </div>
+                    <div class="dashboard-chart-body"><canvas id="chartOG"></canvas></div>
+                </div>
+            </div>
+
+            <div class="dashboard-secao dashboard-roadmap-card">
+                <div class="dashboard-secao-header">
+                    <h3><i class="bi bi-stars"></i>&nbsp; Tecnologias Futuras</h3>
+                    <span class="dashboard-status-pill status-andamento">Planejado</span>
+                </div>
+                <p class="dashboard-roadmap-intro">Assistente Inteligente de apoio à gestão do Plano PETRANS (roadmap — ainda não implementado).</p>
+                <div class="dashboard-roadmap-grid">
+                    <div class="dashboard-roadmap-item">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <div>
+                            <strong>Resumo automático</strong>
+                            <p>Síntese automática dos Planos de Ação 5W2H para leitura rápida pelo Comitê.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-roadmap-item">
+                        <i class="bi bi-tags"></i>
+                        <div>
+                            <strong>Classificação automática</strong>
+                            <p>Sugestão automática de Eixo/Linha de Ação Estratégica com base no conteúdo da ação.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-roadmap-item">
+                        <i class="bi bi-people"></i>
+                        <div>
+                            <strong>Apoio ao Comitê</strong>
+                            <p>Assistente para triagem e priorização das ações aguardando avaliação.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-secao">
+                <div class="dashboard-secao-header">
+                    <h3>Ações Estratégicas do Plano</h3>
+                    <span class="dashboard-chart-hint" id="dashboardResultadosContagem"></span>
+                </div>
+                <div class="table-container">
+                    <table id="dashboardResultadosTable">
+                        <thead>
+                            <tr>
+                                <th>AE</th>
+                                <th>Linha de Ação Estratégica</th>
+                                <th>Diretriz</th>
+                                <th>Setor Responsável</th>
+                                <th>Prazo</th>
+                                <th>Meta</th>
+                                <th>Indicador de Desempenho</th>
+                                <th>Status da Aprovação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardResultadosBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Painel de Administração Geral -->
+        <section class="comite-container" id="adminView" style="display: none;">
+            <div class="comite-header">
+                <button class="button button-secondary" id="btnVoltarAcoesDoAdmin">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 1.1rem; height: 1.1rem; margin-right: 0.4rem; display: inline-block; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>Voltar para Ações</span>
+                </button>
+                <div>
+                    <h2 style="margin-bottom: 0.15rem;">Painel de Administração</h2>
+                    <p style="color: var(--muted-foreground); margin: 0;">Gestão de usuários do sistema SISCETRAN.</p>
+                </div>
+            </div>
+
+            <!-- Abas do Admin -->
+            <div class="comite-filtros" id="adminTabs">
+                <button class="filtro-btn active" data-tab="tabAdminUsuarios">Gestão de Usuários</button>
+                <button class="filtro-btn" data-tab="tabAdminAcoes">Gestão de Ações</button>
+            </div>
+
+            <!-- Conteúdo: Usuários -->
+            <div id="tabAdminUsuarios" class="admin-tab-content">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                    <button id="btnNovoUsuario" class="button button-success">
+                        <i class="bi bi-person-plus"></i> &nbsp; Novo Usuário
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table id="adminUsuariosTable">
+                        <thead>
+                            <tr>
+                                <th>Email / Usuário</th>
+                                <th>Perfil de Acesso</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsuariosBody">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Conteúdo: Ações Estratégicas -->
+            <div id="tabAdminAcoes" class="admin-tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; color: var(--primary-dark);">Ações Base do Sistema</h3>
+                    <button id="btnNovaAcaoAdmin" class="button button-success">
+                        <i class="bi bi-plus-circle"></i> &nbsp; Nova Ação
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table id="adminAcoesTable">
+                        <thead>
+                            <tr>
+                                <th>ID da Ação</th>
+                                <th>Diretriz Estratégica</th>
+                                <th>Prazo</th>
+                                <th>Setor Responsável</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminAcoesBody">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal: Cadastrar Nova Ação Admin -->
+        <div class="modal" id="modalAdminNovaAcao" style="display: none;">
+            <div class="modal-content" style="width: 650px; max-width: 95%;">
+                <span class="close" id="closeModalAdminAcao">&times;</span>
+                <h2 style="margin-bottom: 1.5rem;">Cadastrar Nova Ação Base</h2>
+                <form id="formAdminAcao">
+                    <div style="display: grid; gap: 1rem; grid-template-columns: 1fr 1fr;">
+                        <div style="grid-column: span 2;">
+                            <label>ID da Ação (Ex: AE 5.1.1.1)</label>
+                            <input type="text" id="adminAcaoId" required>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>Diretriz Estratégica</label>
+                            <textarea id="adminAcaoDiretriz" rows="3" required></textarea>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>Linha de Ação Estratégica (LAE)</label>
+                            <input type="text" id="adminAcaoLae" required>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>Objetivo de Governo (OG)</label>
+                            <input type="text" id="adminAcaoOg" required>
+                        </div>
+                        <div>
+                            <label>Prazo</label>
+                            <select id="adminAcaoPrazo" required>
+                                <option value="Curto Prazo">Curto Prazo</option>
+                                <option value="Médio Prazo">Médio Prazo</option>
+                                <option value="Longo Prazo">Longo Prazo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Setor Responsável</label>
+                            <input type="text" id="adminAcaoSetor" required>
+                        </div>
+                        <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="submit" class="button button-success">Salvar Ação</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </main>
 
-    <!-- Modal de Detalhe e Avaliação da Ação -->
     <div class="modal" id="modalAvaliacao" style="display: none;">
         <div class="modal-content modal-avaliacao-content">
             <span class="close" id="closeModalAvaliacao">&times;</span>
@@ -266,4 +547,3 @@
 
 </body>
 </html>
-
