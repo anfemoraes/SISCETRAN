@@ -27,6 +27,7 @@ const corpoTabelaAcoes = document.getElementById("acoesTableBody");
 const corpoTabelaRegistros = document.getElementById("registroTableBody");
 
 const camposForm = {
+    nome: document.getElementById("f_nome"),
     oque: document.getElementById("f_oque"),
     porque: document.getElementById("f_porque"),
     como: document.getElementById("f_como"),
@@ -34,7 +35,8 @@ const camposForm = {
     onde: document.getElementById("f_onde"),
     quanto: document.getElementById("f_quanto"),
     impacto: document.getElementById("f_impacto"),
-    observacao: document.getElementById("f_observacao")
+    observacao: document.getElementById("f_observacao"),
+    percentual: document.getElementById("f_percentual")
 };
 
 const listaAcoesVinculadasEl = document.getElementById("listaAcoesVinculadas");
@@ -68,16 +70,13 @@ function carregarBanco() {
     const dadosSalvos = JSON.parse(localStorage.getItem(DB_KEY));
     const registrosLegados = JSON.parse(localStorage.getItem("registros"));
 
-    // Lista de usuários para testar o Front
     const usuariosMock = [
         { email: "usuario@email.com", senha: "usuario123", role: "usuario" },
         { email: "comite@email.com", senha: "comite123", role: "comite" },
         { email: "admin@email.com", senha: "admin123", role: "admin" }
     ];
 
-    // Se já existem dados no navegador da época do backend real
     if (dadosSalvos && Array.isArray(dadosSalvos.registros)) {
-        // Injeta os usuários mockados à força se o array de usuários estiver vazio ou quebrado
         if (!dadosSalvos.usuarios || dadosSalvos.usuarios.length === 0) {
             dadosSalvos.usuarios = usuariosMock;
             localStorage.setItem(DB_KEY, JSON.stringify(dadosSalvos));
@@ -85,7 +84,6 @@ function carregarBanco() {
         return dadosSalvos;
     }
 
-    // Se for o primeiro acesso limpo
     const bancoInicial = {
         usuarios: usuariosMock,
         registros: Array.isArray(registrosLegados) ? registrosLegados : []
@@ -333,17 +331,23 @@ btnDetalharSelecionada.onclick = () => {
     if (floatingBtn) floatingBtn.classList.remove('visible');
 };
 
-function preencherFormularioComAcoes(acoes) {
-    idRegistroSendoEditado = null;
-
+// Função para atualizar apenas o visual da lista (usada na criação e edição)
+function atualizarVisorAcoesVinculadas(acoes) {
     listaAcoesVinculadasEl.innerHTML = "";
     acoes.forEach(acao => {
         const item = document.createElement("div");
         item.className = "lista-acoes-item";
-        item.innerHTML = `<span>✓ ${acao.id}</span> <span>${acao.diretriz}</span>`;
+        item.innerHTML = `<span>✓ <strong>${acao.id}</strong> - ${acao.diretriz}</span>`;
         listaAcoesVinculadasEl.appendChild(item);
     });
+}
 
+// Preenche o formulário (zerando os campos, usado apenas ao criar ou carregar tela)
+function preencherFormularioComAcoes(acoes) {
+    idRegistroSendoEditado = null;
+    atualizarVisorAcoesVinculadas(acoes);
+
+    camposForm.nome.value = "";
     camposForm.oque.value = "";
     camposForm.porque.value = "";
     camposForm.como.value = "";
@@ -352,7 +356,55 @@ function preencherFormularioComAcoes(acoes) {
     camposForm.quanto.value = "";
     camposForm.impacto.value = "";
     camposForm.observacao.value = "";
+    if (camposForm.percentual) camposForm.percentual.value = "";
 }
+
+// NOVA FUNÇÃO: Abre o modal para alterar as diretrizes sem perder dados do formulário
+window.editarDiretrizesVinculadas = function() {
+    if (!window.acoesEstrategicas || window.acoesEstrategicas.length === 0) return;
+
+    let htmlCheckboxes = `<div style="text-align: left; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc;">`;
+    
+    window.acoesEstrategicas.forEach(acao => {
+        const isChecked = acoesSelecionadas.some(sel => sel.id === acao.id) ? 'checked' : '';
+        htmlCheckboxes += `
+            <label style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; font-size: 0.9rem; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 1px solid #e2e8f0;">
+                <input type="checkbox" class="swal-acao-checkbox" value="${acao.id}" ${isChecked} style="margin-top: 3px;">
+                <span><strong>${acao.id}</strong><br><span style="color: #64748b;">${acao.diretriz}</span></span>
+            </label>
+        `;
+    });
+    htmlCheckboxes += `</div>`;
+
+    Swal.fire({
+        title: 'Alterar Diretrizes Vinculadas',
+        html: htmlCheckboxes,
+        width: '700px',
+        showCancelButton: true,
+        confirmButtonText: 'Salvar Seleção',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2563eb',
+        preConfirm: () => {
+            const checkedNodes = document.querySelectorAll('.swal-acao-checkbox:checked');
+            if (checkedNodes.length === 0) {
+                Swal.showValidationMessage('Você precisa manter pelo menos uma diretriz selecionada.');
+                return false;
+            }
+            const novosSelecionados = [];
+            checkedNodes.forEach(node => {
+                const acaoEncontrada = window.acoesEstrategicas.find(a => a.id === node.value);
+                if (acaoEncontrada) novosSelecionados.push(acaoEncontrada);
+            });
+            return novosSelecionados;
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            // Atualiza a variável global e o visor sem apagar o que já está nos inputs
+            acoesSelecionadas = result.value;
+            atualizarVisorAcoesVinculadas(acoesSelecionadas);
+        }
+    });
+};
 
 function limparSelecao() {
     document.querySelectorAll('.acao-checkbox').forEach(cb => cb.checked = false);
@@ -361,7 +413,9 @@ function limparSelecao() {
 }
 
 function limparFormulario() {
-    Object.values(camposForm).forEach(campo => campo.value = "");
+    Object.values(camposForm).forEach(campo => {
+        if (campo) campo.value = "";
+    });
     idRegistroSendoEditado = null;
     limparSelecao();
 }
@@ -380,16 +434,17 @@ btnVoltarAcoes.onclick = () => {
 };
 
 function gerarID() {
-    return `${Date.now()}-${Math.floor(Math.random() * 100)}`;
+    return 'ID-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
 function validarFormulario() {
-    const camposObrigatorios = ['oque', 'porque', 'como', 'quando', 'onde', 'quanto', 'impacto'];
-    return camposObrigatorios.every(chave => camposForm[chave].value.trim() !== "");
+    const camposObrigatorios = ['nome', 'oque', 'porque', 'como', 'quando', 'onde', 'quanto', 'impacto', 'percentual'];
+    return camposObrigatorios.every(chave => camposForm[chave] && camposForm[chave].value.trim() !== "");
 }
 
 function capturarDadosFormulario() {
     return {
+        nome: camposForm.nome.value,
         oque: camposForm.oque.value,
         porque: camposForm.porque.value,
         como: camposForm.como.value,
@@ -397,7 +452,8 @@ function capturarDadosFormulario() {
         onde: camposForm.onde.value,
         quanto: camposForm.quanto.value,
         impacto: camposForm.impacto.value,
-        observacao: camposForm.observacao.value
+        observacao: camposForm.observacao.value,
+        percentual: parseFloat(camposForm.percentual.value) || 0
     };
 }
 
@@ -415,7 +471,7 @@ btnSalvarRascunho.onclick = async () => {
         Swal.fire({
             icon: 'warning',
             title: 'Campos obrigatórios',
-            text: 'Por favor, preencha todos os campos obrigatórios.',
+            text: 'Por favor, preencha todos os campos obrigatórios (incluindo a porcentagem).',
             confirmButtonColor: '#2563eb'
         });
         return;
@@ -436,22 +492,50 @@ btnSalvarRascunho.onclick = async () => {
     if (idRegistroSendoEditado) {
         const index = registros.findIndex(reg => reg.id === idRegistroSendoEditado);
         if (index !== -1) {
-            registros[index] = {
-                ...registros[index],
-                ...dadosAcao,
-                status: "Rascunho",
-                dataEdicao: new Date().toLocaleString(),
-                acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas) 
-            };
-            Swal.fire({
-                icon: 'success',
-                title: 'Rascunho salvo!',
-                text: 'O rascunho foi atualizado com sucesso.',
-                timer: 2000,
-                showConfirmButton: false
-            });
+            const registroOriginal = registros[index];
+
+            // Regra de Acréscimo/Versioning: Se a matriz original já foi APROVADA,
+            // criamos uma nova versão vinculada para preservar o histórico do comitê!
+            if (registroOriginal.status === "Aprovado") {
+                const novoRegistroAcrescentado = {
+                    id: gerarID(),
+                    dataCriacao: new Date().toLocaleString(),
+                    status: "Rascunho",
+                    comentarioComite: "-",
+                    criadoPor: usuarioLogado.email,
+                    versaoAnteriorId: registroOriginal.id,
+                    acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas),
+                    ...dadosAcao
+                };
+                registros.push(novoRegistroAcrescentado);
+                idRegistroSendoEditado = novoRegistroAcrescentado.id;
+
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Nova Versão (Acréscimo) Criada!',
+                    text: `Como a matriz ${registroOriginal.id} já estava aprovada, foi gerado um novo acréscimo (ID: ${novoRegistroAcrescentado.id}) mantendo o histórico intacto.`,
+                    confirmButtonColor: '#2563eb'
+                });
+            } else {
+                registros[index] = {
+                    ...registroOriginal,
+                    ...dadosAcao,
+                    status: "Rascunho",
+                    dataEdicao: new Date().toLocaleString(),
+                    acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas) 
+                };
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Rascunho salvo!',
+                    text: 'O rascunho foi atualizado com sucesso.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
         }
-        idRegistroSendoEditado = null;
+        if (registros[index]?.status !== "Aprovado") {
+            idRegistroSendoEditado = null;
+        }
     } else {
         const novoRegistro = {
             id: gerarID(),
@@ -477,14 +561,16 @@ btnSalvarRascunho.onclick = async () => {
     salvarBanco();
 };
 
-btnEnviarComite.onclick = async () => {
+btnEnviarComite.onclick = async (e) => {
+    e.preventDefault(); 
+
     if (!exigirLogin()) return;
 
     if (!validarFormulario()) {
         Swal.fire({
             icon: 'warning',
             title: 'Campos obrigatórios',
-            text: 'Por favor, preencha todos os campos obrigatórios.',
+            text: 'Por favor, preencha todos os campos obrigatórios (incluindo a porcentagem).',
             confirmButtonColor: '#2563eb'
         });
         return;
@@ -518,15 +604,33 @@ btnEnviarComite.onclick = async () => {
     if (idRegistroSendoEditado) {
         const index = registros.findIndex(reg => reg.id === idRegistroSendoEditado);
         if (index !== -1) {
-            registros[index] = { 
-                ...registros[index], 
-                ...dadosAcao, 
-                status: "Enviado",
-                comentarioComite: "-",
-                avaliadoPor: null,
-                dataAvaliacao: null,
-                acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas)
-            };
+            const registroOriginal = registros[index];
+
+            if (registroOriginal.status === "Aprovado") {
+                const novoRegistroAcrescentado = {
+                    id: gerarID(),
+                    dataCriacao: new Date().toLocaleString(),
+                    status: "Enviado",
+                    comentarioComite: "-",
+                    avaliadoPor: null,
+                    dataAvaliacao: null,
+                    criadoPor: usuarioLogado.email,
+                    versaoAnteriorId: registroOriginal.id,
+                    acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas),
+                    ...dadosAcao
+                };
+                registros.push(novoRegistroAcrescentado);
+            } else {
+                registros[index] = { 
+                    ...registroOriginal, 
+                    ...dadosAcao, 
+                    status: "Enviado",
+                    comentarioComite: "-",
+                    avaliadoPor: null,
+                    dataAvaliacao: null,
+                    acoesEstrategicas: gerarEstruturaAcoesVinculadas(acoesSelecionadas)
+                };
+            }
         }
         idRegistroSendoEditado = null;
     } else {
@@ -543,28 +647,32 @@ btnEnviarComite.onclick = async () => {
     }
 
     salvarBanco();
+    
     Swal.fire({
         icon: 'success',
-        title: 'Ação enviada!',
+        title: 'Matriz enviada!',
         text: 'O detalhamento foi enviado para análise.',
         timer: 2000,
         showConfirmButton: false
     });
     
     heroSection.style.display = "none";
-    acoesTableContainer.style.display = "block";
+    acoesTableContainer.style.display = "none";
     formulario.style.display = "none";
-    tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
     if (andamentoView) andamentoView.style.display = "none";
+    
+    tabelaRegistros.style.display = "block"; 
+    
     limparFormulario();
-    renderizarTabelaAcoes();
+    atualizarTabelaRegistros(); 
 };
 
 function atualizarTabelaRegistros() {
     corpoTabelaRegistros.innerHTML = "";
 
     const esComite = Boolean(usuarioLogado && (usuarioLogado.role === 'comite' || usuarioLogado.role === 'admin'));
+    const esAdmin = Boolean(usuarioLogado && usuarioLogado.role === 'admin');
 
     let dadosFiltrados = registros;
 
@@ -575,7 +683,7 @@ function atualizarTabelaRegistros() {
     }
 
     if (dadosFiltrados.length === 0) {
-        corpoTabelaRegistros.innerHTML = `<tr><td colspan="9" class="table-empty-state">Nenhum registro encontrado</td></tr>`;
+        corpoTabelaRegistros.innerHTML = `<tr><td colspan="10" class="table-empty-state">Nenhum registro encontrado</td></tr>`;
         return;
     }
 
@@ -583,37 +691,62 @@ function atualizarTabelaRegistros() {
         const linha = document.createElement("tr");
         let botoesAcao = "";
 
-        // CORREÇÃO AQUI: Se estiver em "Meus Rascunhos" e for o dono, mostra os botões SEMPRE.
-        if (modoVisualizacao === "meus_rascunhos" && registro.criadoPor === usuarioLogado?.email && (registro.status === "Rascunho" || registro.status === "Pendente")) {
+        if (esAdmin) {
+            // Aprovada -> "Atualizar" (acréscimo, preserva o histórico do comitê).
+            // Rascunho/Enviado/Pendente -> "Editar" (edição direta, ainda não passou pelo comitê).
+            const botaoEditarOuAtualizar = registro.status === "Aprovado" ? `
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" style="color: #7c3aed;" title="Atualizar (adiciona impacto/progresso preservando a versão aprovada)">
+                    <i class="bi bi-arrow-repeat"></i> Atualizar
+                </button>
+            ` : `
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar (ainda não enviada ao comitê)">
+                    <i class="bi bi-pencil-square"></i> Editar
+                </button>
+            `;
+
             botoesAcao = `
+                ${botaoEditarOuAtualizar}
+                <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir (Admin)">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+                <button onclick="abrirModalEditarPorcentagem('${registro.id}')" class="button-editar" style="color: #d97706; margin-left: 4px;" title="Ajustar Porcentagem">
+                    <i class="bi bi-percent"></i>
+                </button>
+            `;
+        } 
+        else if (modoVisualizacao === "meus_rascunhos" && registro.criadoPor === usuarioLogado?.email && (registro.status === "Rascunho" || registro.status === "Pendente")) {
+            let botaoEnviar = registro.status === "Rascunho" ? `
                 <button onclick="enviarRegistroDireto('${registro.id}')" class="button-editar" style="color: #16a34a;" title="Enviar para Comitê">
                     <i class="bi bi-send-fill"></i>
                 </button>
-                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
-                    <i class="bi bi-pencil-square"></i>
-                </button>
+            ` : "";
+
+            let botaoExcluir = registro.versaoAnteriorId ? "" : `
                 <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir">
                     <i class="bi bi-trash3-fill"></i>
                 </button>
             `;
-        } else if (esComite) {
-            // Lógica do Comitê visualizando a tabela geral
-            if (registro.status === "Enviado") {
-                botoesAcao = `
-                    <button onclick="avaliarAcao('${registro.id}', 'Aprovado')" class="button-aprovar" title="Aprovar">Aprovar</button>
-                    <button onclick="avaliarAcao('${registro.id}', 'Reprovado')" class="button-reprovar" title="Reprovar">Reprovar</button>
-                `;
-            } else if (registro.status === "Pendente") {
-                botoesAcao = `<span class="table-status-text">Devolvido para correção</span>`;
-            } else if (registro.status === "Rascunho") {
-                botoesAcao = `<span class="table-status-text">Ainda não enviado</span>`;
-            } else {
-                botoesAcao = `<span class="table-status-text">Avaliado</span>`;
-            }
-        } else {
-            // Usuário comum visualizando a tabela geral
-            const rotulos = { 'Rascunho': 'Rascunho', 'Pendente': 'Correção Solicitada', 'Enviado': 'Em Análise', 'Aprovado': 'Em Análise' };
-            botoesAcao = `<span class="table-status-text">${rotulos[registro.status] || 'Em Análise'}</span>`;
+
+            botoesAcao = `
+                ${botaoEnviar}
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                ${botaoExcluir}
+            `;
+        } 
+        else if (esComite && registro.status === "Enviado") {
+            botoesAcao = `
+                <button onclick="avaliarAcao('${registro.id}', 'Aprovado')" class="button-aprovar" title="Aprovar">Aprovar</button>
+                <button onclick="avaliarAcao('${registro.id}', 'Reprovado')" class="button-reprovar" title="Reprovar">Reprovar</button>
+            `;
+        } 
+        else {
+            botoesAcao = `
+                <button onclick="abrirDetalheAvaliacao('${registro.id}')" class="button-editar" style="color: #3b82f6;" title="Ver Detalhes">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
+            `;
         }
 
         let colunaAcoes = "";
@@ -627,12 +760,20 @@ function atualizarTabelaRegistros() {
             colunaAcoes = "-";
         }
 
+        let idExibicao = registro.id;
+        if (registro.versaoAnteriorId) {
+            idExibicao += ` <span style="font-size:0.75rem; color:#2563eb;" title="Acréscimo gerado a partir de ${registro.versaoAnteriorId}">(Acréscimo)</span>`;
+        }
+        const nomeExibicao = registro.nome ? escaparTexto(registro.nome) : `<span style="color:#94a3b8;">(sem nome)</span>`;
+
         linha.innerHTML = `
-            <td>${registro.id || `ID-${Math.random().toString(36).substr(2, 4)}`}</td>
+            <td><strong>${nomeExibicao}</strong></td>
+            <td>${idExibicao}</td>
             <td>${colunaAcoes}</td>
             <td>${registro.oque}</td>
             <td>${registro.onde}</td>
             <td>${formatarData(registro.quando)}</td>
+            <td><strong>${registro.percentual || 0}%</strong></td>
             <td>${formatarImpacto(registro.impacto)}</td>
             <td><span class="badge-${registro.status.toLowerCase()}">${registro.status}</span></td>
             <td><em>${registro.comentarioComite || "-"}</em></td>
@@ -642,15 +783,161 @@ function atualizarTabelaRegistros() {
     });
 }
 
+function renderizarTabelaAdminGestaoDados() {
+    const tbody = document.getElementById("adminGestaoDadosBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    if (registros.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="table-empty-state">Nenhum dado lançado no sistema.</td></tr>`;
+        return;
+    }
+
+    const listaInvertida = [...registros].reverse();
+
+    listaInvertida.forEach(reg => {
+        const tr = document.createElement("tr");
+
+        let acoesTexto = "-";
+        if (reg.acoesEstrategicas && Array.isArray(reg.acoesEstrategicas)) {
+            acoesTexto = reg.acoesEstrategicas.map(a => `<strong>${a.id}</strong>`).join(', ');
+        }
+
+        tr.innerHTML = `
+            <td><strong>${reg.nome ? escaparTexto(reg.nome) : '<span style="color:#94a3b8;">(sem nome)</span>'}</strong></td>
+            <td>${reg.id}</td>
+            <td>${acoesTexto}</td>
+            <td>${escaparTexto(reg.oque ? reg.oque.substring(0, 50) + "..." : "-")}</td>
+            <td><strong>${reg.percentual || 0}%</strong></td>
+            <td>
+                <select class="form-control" style="padding: 4px; font-size: 0.85rem; border-radius: 4px;" onchange="adminAlterarStatus('${reg.id}', this.value)">
+                    <option value="Rascunho" ${reg.status === 'Rascunho' ? 'selected' : ''}>Rascunho</option>
+                    <option value="Enviado" ${reg.status === 'Enviado' ? 'selected' : ''}>Enviado (Comitê)</option>
+                    <option value="Aprovado" ${reg.status === 'Aprovado' ? 'selected' : ''}>Aprovado</option>
+                    <option value="Pendente" ${reg.status === 'Pendente' ? 'selected' : ''}>Pendente (Correção)</option>
+                </select>
+            </td>
+            <td>${escaparTexto(reg.criadoPor || "-")}</td>
+            <td style="white-space: nowrap; display: flex; gap: 6px; align-items: center;">
+                <button class="button-editar" style="color: #3b82f6;" title="Ajustar Porcentagem" onclick="abrirModalEditarPorcentagem('${reg.id}')"><i class="bi bi-percent"></i></button>
+                <button class="button-excluir" title="Excluir Definitivamente" onclick="excluirRegistroAdmin('${reg.id}')"><i class="bi bi-trash3-fill"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.adminAlterarStatus = async function(id, novoStatus) {
+    const reg = registros.find(r => r.id === id);
+    if (!reg) return;
+
+    reg.status = novoStatus;
+    salvarBanco();
+
+    if (typeof atualizarDashboard === 'function') {
+        atualizarDashboard();
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Status atualizado!',
+        text: `O registro ID ${id} agora está como "${novoStatus}".`,
+        timer: 1500,
+        showConfirmButton: false
+    });
+
+    renderizarTabelaAdminGestaoDados();
+    if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
+};
+
+window.excluirRegistroAdmin = async function(id) {
+    const index = registros.findIndex(r => r.id === id);
+    if (index === -1) return;
+
+    const result = await Swal.fire({
+        title: 'Excluir registro?',
+        text: `Deseja apagar definitivamente o registro ID ${id} do sistema e do dashboard?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        registros.splice(index, 1);
+        salvarBanco();
+
+        if (typeof atualizarDashboard === 'function') {
+            atualizarDashboard();
+        }
+
+        Swal.fire({ icon: 'success', title: 'Excluído!', timer: 1500, showConfirmButton: false });
+        renderizarTabelaAdminGestaoDados();
+        if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
+    }
+};
+
+window.abrirModalEditarPorcentagem = async function(idRegistro) {
+    if (!usuarioLogado || usuarioLogado.role !== 'admin') {
+        Swal.fire('Acesso negado', 'Apenas administradores podem ajustar percentuais.', 'error');
+        return;
+    }
+
+    const registro = registros.find(r => r.id === idRegistro);
+    if (!registro) return;
+
+    const { value: novoPercentual } = await Swal.fire({
+        title: 'Ajustar Porcentagem da Matriz',
+        text: `${registro.nome || 'Sem nome'} (ID: ${registro.id}) - O quê: ${registro.oque}`,
+        input: 'number',
+        inputAttributes: { min: 0, max: 100, step: 1 },
+        inputValue: registro.percentual || 0,
+        showCancelButton: true,
+        confirmButtonText: 'Salvar Ajuste',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2563eb'
+    });
+
+    if (novoPercentual !== undefined) {
+        const valorNumerico = parseFloat(novoPercentual);
+        if (isNaN(valorNumerico) || valorNumerico < 0 || valorNumerico > 100) {
+            Swal.fire('Valor inválido', 'Digite uma porcentagem entre 0 e 100.', 'warning');
+            return;
+        }
+
+        registro.percentual = valorNumerico;
+        salvarBanco();
+
+        if (typeof atualizarDashboard === 'function') {
+            atualizarDashboard();
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Porcentagem atualizada!',
+            text: `O novo progresso desta matriz foi alterado para ${valorNumerico}%.`,
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        if (document.getElementById("tabAdminGestaoDados") && document.getElementById("tabAdminGestaoDados").style.display === "block") {
+            renderizarTabelaAdminGestaoDados();
+        }
+        if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
+    }
+};
+
 window.avaliarAcao = async function(id, novoStatus) {
     const index = registros.findIndex(reg => reg.id === id);
     if (index === -1) return;
 
     const { value: parecer } = await Swal.fire({
-        title: `Avaliar ação - ${novoStatus}`,
+        title: `Avaliar matriz - ${novoStatus}`,
         input: 'textarea',
         inputLabel: 'Digite seu parecer/comentário',
-        inputPlaceholder: 'Seu parecer sobre esta ação...',
+        inputPlaceholder: 'Seu parecer sobre esta matriz...',
         showCancelButton: true,
         confirmButtonColor: novoStatus === 'Aprovado' ? '#2ecc71' : '#e63946',
         cancelButtonColor: '#6c757d',
@@ -673,12 +960,17 @@ window.avaliarAcao = async function(id, novoStatus) {
     registros[index].dataAvaliacao = new Date().toLocaleString();
 
     salvarBanco();
+
+    if (typeof atualizarDashboard === 'function') {
+        atualizarDashboard();
+    }
+
     Swal.fire({
         icon: 'success',
-        title: novoStatus === 'Aprovado' ? 'Ação Aprovada!' : 'Ação Reprovada!',
+        title: novoStatus === 'Aprovado' ? 'Matriz Aprovada!' : 'Matriz Reprovada!',
         text: novoStatus === 'Aprovado'
-            ? 'A ação foi aprovada com sucesso.'
-            : 'A ação foi reprovada e devolvida ao solicitante para correção.',
+            ? 'A matriz foi aprovada com sucesso.'
+            : 'A matriz foi reprovada e devolvida ao solicitante para correção.',
         timer: 2500,
         showConfirmButton: false
     });
@@ -768,7 +1060,7 @@ function renderizarCardsComite() {
     dadosFiltrados = [...dadosFiltrados].reverse();
 
     if (dadosFiltrados.length === 0) {
-        comiteCardsContainer.innerHTML = `<div class="table-empty-state comite-empty-state">Nenhuma ação encontrada para este filtro.</div>`;
+        comiteCardsContainer.innerHTML = `<div class="table-empty-state comite-empty-state">Nenhuma matriz encontrada para este filtro.</div>`;
         return;
     }
 
@@ -782,14 +1074,16 @@ function renderizarCardsComite() {
         return `
             <div class="comite-card">
                 <div class="comite-card-header">
-                    <span class="comite-card-id">ID ${escaparTexto(registro.id)}</span>
+                    <span class="comite-card-id">${registro.nome ? escaparTexto(registro.nome) : `ID ${escaparTexto(registro.id)}`}</span>
                     <span class="badge-${registro.status.toLowerCase()}">${escaparTexto(registro.status)}</span>
                 </div>
+                ${registro.nome ? `<div style="font-size:0.72rem; color:#94a3b8; margin-top:-0.4rem; margin-bottom:0.4rem;">ID ${escaparTexto(registro.id)}</div>` : ''}
                 <div class="comite-card-acoes" title="${escaparTexto(acoesTexto)}">${escaparTexto(acoesTexto)}</div>
                 <p class="comite-card-oque">${oqueResumo}</p>
                 <div class="comite-card-meta">
                     <span><strong>Onde:</strong> ${escaparTexto(registro.onde || "-")}</span>
                     <span><strong>Quando:</strong> ${formatarData(registro.quando)}</span>
+                    <span><strong>Progresso:</strong> ${registro.percentual || 0}%</span>
                     <span><strong>Impacto:</strong> ${formatarImpacto(registro.impacto)}</span>
                 </div>
                 <div class="comite-card-footer">
@@ -837,11 +1131,15 @@ window.abrirDetalheAvaliacao = function(id) {
             </div>
         `;
     } else if (podeAvaliar) {
+        // === [ AQUI ESTÁ A CORREÇÃO DE Z-INDEX COM AVISO INLINE ] ===
         blocoParecerOuAcoes = `
             <div class="detalhe-avaliacao-form">
                 <label for="modalParecerInput">Parecer / Justificativa da decisão</label>
-                <textarea id="modalParecerInput" rows="3" placeholder="Descreva o parecer sobre esta ação..."></textarea>
-                <div class="detalhe-avaliacao-botoes">
+                <textarea id="modalParecerInput" rows="3" placeholder="Descreva o parecer sobre esta matriz..."></textarea>
+                <span id="modalParecerErro" style="color: #e63946; font-size: 0.85rem; display: none; margin-top: 4px;">
+                    ⚠️ Esse campo é obrigatório. Por favor, digite um parecer.
+                </span>
+                <div class="detalhe-avaliacao-botoes" style="margin-top: 10px;">
                     <button class="button button-reprovar-modal" onclick="confirmarAvaliacaoModal('${registro.id}', 'Reprovado')">
                         ❌ Reprovar
                     </button>
@@ -852,15 +1150,15 @@ window.abrirDetalheAvaliacao = function(id) {
             </div>
         `;
     } else {
-        blocoParecerOuAcoes = `<p class="table-status-text">Esta ação ainda aguarda avaliação.</p>`;
+        blocoParecerOuAcoes = `<p class="table-status-text">Esta matriz ainda aguarda avaliação.</p>`;
     }
 
     modalAvaliacaoBody.innerHTML = `
-        <h2 style="margin-bottom: 0.25rem;">Detalhamento da Ação — ID ${escaparTexto(registro.id)}</h2>
+        <h2 style="margin-bottom: 0.25rem;">${registro.nome ? escaparTexto(registro.nome) : 'Detalhamento da Matriz'} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">— ID ${escaparTexto(registro.id)}</span></h2>
         <span class="badge-${registro.status.toLowerCase()}">${escaparTexto(registro.status)}</span>
 
         <div class="detalhe-secao">
-            <strong>Ações Estratégicas Vinculadas</strong>
+            <strong>Diretrizes Estratégicas Vinculadas</strong>
             <p>${escaparTexto(acoesTexto)}</p>
         </div>
 
@@ -890,6 +1188,10 @@ window.abrirDetalheAvaliacao = function(id) {
                 <p>${escaparTexto(registro.quanto || "-")}</p>
             </div>
             <div class="detalhe-item">
+                <strong>Progresso (%)</strong>
+                <p><strong>${registro.percentual || 0}%</strong></p>
+            </div>
+            <div class="detalhe-item">
                 <strong>Impacto</strong>
                 <p>${formatarImpacto(registro.impacto)}</p>
             </div>
@@ -910,23 +1212,28 @@ window.abrirDetalheAvaliacao = function(id) {
     modalAvaliacao.style.display = 'flex';
 };
 
+// === [ AQUI ESTÁ A CORREÇÃO DE VALIDAÇÃO INLINE ] ===
 window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     const textarea = document.getElementById('modalParecerInput');
+    const erroSpan = document.getElementById('modalParecerErro');
     const parecer = textarea ? textarea.value.trim() : "";
 
     if (!parecer) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Parecer obrigatório',
-            text: 'Por favor, digite um parecer antes de confirmar a decisão.',
-            confirmButtonColor: '#2563eb'
-        });
+        if (erroSpan) erroSpan.style.display = 'block';
+        if (textarea) textarea.style.borderColor = '#e63946';
         return;
     }
 
+    // Se o usuário preencheu corretamente, oculta a mensagem de erro
+    if (erroSpan) erroSpan.style.display = 'none';
+    if (textarea) textarea.style.borderColor = '';
+
+    const modal = document.getElementById('modalAvaliacao');
+    modal.style.display = 'none';
+
     const result = await Swal.fire({
         title: `Confirmar decisão`,
-        text: `Deseja realmente marcar esta ação como "${novoStatus}"?`,
+        text: `Deseja realmente marcar esta matriz como "${novoStatus}"?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: novoStatus === 'Aprovado' ? '#2ecc71' : '#e63946',
@@ -935,7 +1242,10 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
         cancelButtonText: 'Cancelar'
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+        modal.style.display = 'flex';
+        return;
+    }
 
     const index = registros.findIndex(reg => reg.id === id);
     if (index === -1) return;
@@ -949,20 +1259,21 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
 
     salvarBanco();
 
-    modalAvaliacao.style.display = 'none';
+    if (typeof atualizarDashboard === 'function') {
+        atualizarDashboard();
+    }
 
     Swal.fire({
         icon: 'success',
-        title: novoStatus === 'Aprovado' ? 'Ação Aprovada!' : 'Ação Reprovada!',
+        title: novoStatus === 'Aprovado' ? 'Matriz Aprovada!' : 'Matriz Reprovada!',
         text: novoStatus === 'Aprovado'
-            ? 'A ação foi aprovada com sucesso.'
-            : 'A ação foi reprovada e devolvida ao solicitante para correção.',
+            ? 'A matriz foi aprovada com sucesso.'
+            : 'A matriz foi reprovada e devolvida ao solicitante para correção.',
         timer: 2500,
         showConfirmButton: false
     });
 
     renderizarPainelComite();
-    if (andamentoView && andamentoView.style.display === "block") renderizarAndamento();
     if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
 };
 
@@ -979,11 +1290,24 @@ window.excluirRegistro = async function(id) {
     const index = registros.findIndex(reg => reg.id === id);
     if (index === -1) return;
 
-    if (registros[index].status !== "Rascunho" && registros[index].status !== "Pendente") {
+    const registro = registros[index];
+    const esAdmin = Boolean(usuarioLogado && usuarioLogado.role === 'admin');
+
+    if (registro.versaoAnteriorId && !esAdmin) {
         Swal.fire({
             icon: 'error',
             title: 'Ação não permitida',
-            text: 'Esta ação já foi enviada ao comitê e não pode mais ser excluída.',
+            text: 'Este é um acréscimo de uma matriz já aprovada. Apenas o Admin pode excluir acréscimos, para preservar o histórico do comitê.',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
+    if (registro.status !== "Rascunho" && registro.status !== "Pendente" && !esAdmin) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Ação não permitida',
+            text: 'Esta matriz já foi enviada e não pode ser excluída.',
             confirmButtonColor: '#2563eb'
         });
         return;
@@ -991,7 +1315,7 @@ window.excluirRegistro = async function(id) {
 
     const result = await Swal.fire({
         title: 'Confirmar exclusão',
-        text: `Deseja realmente excluir o rascunho ID: ${id}?`,
+        text: `Deseja realmente excluir o registro ID: ${id} do dashboard?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#e63946',
@@ -1003,10 +1327,15 @@ window.excluirRegistro = async function(id) {
     if (result.isConfirmed) {
         registros.splice(index, 1);
         salvarBanco();
+
+        if (typeof atualizarDashboard === 'function') {
+            atualizarDashboard();
+        }
+
         Swal.fire({
             icon: 'success',
             title: 'Excluído!',
-            text: 'O rascunho foi removido.',
+            text: 'O registro foi removido com sucesso.',
             timer: 2000,
             showConfirmButton: false
         });
@@ -1018,11 +1347,20 @@ window.editarRegistro = function(id) {
     const registro = registros.find(reg => reg.id === id);
     if (!registro) return;
 
-    if (registro.status !== "Rascunho" && registro.status !== "Pendente") {
+    const esAdmin = Boolean(usuarioLogado && usuarioLogado.role === 'admin');
+
+    if (registro.status === "Aprovado") {
+        Swal.fire({
+            icon: 'info',
+            title: 'Atualizando matriz aprovada',
+            text: 'Esta matriz já foi aprovada pelo comitê, então o histórico dela é protegido. Ao salvar, será criado um novo acréscimo vinculado (com seus dados adicionais, ex.: impacto e progresso), que passa pelo comitê separadamente sem alterar a versão já aprovada.',
+            confirmButtonColor: '#2563eb'
+        });
+    } else if (registro.status !== "Rascunho" && registro.status !== "Pendente" && !esAdmin) {
         Swal.fire({
             icon: 'error',
             title: 'Ação não permitida',
-            text: 'Esta ação já foi enviada ao comitê e não pode mais ser modificada.',
+            text: 'Apenas rascunhos ou matrizes pendentes de correção podem ser editadas.',
             confirmButtonColor: '#2563eb'
         });
         return;
@@ -1032,15 +1370,13 @@ window.editarRegistro = function(id) {
         acoesSelecionadas = registro.acoesEstrategicas.map(acaoRef => {
             return window.acoesEstrategicas.find(a => a.id === acaoRef.id) || acaoRef;
         });
-    } else if (registro.acaoEstrategicaId) {
-        const acao = window.acoesEstrategicas.find(a => a.id === registro.acaoEstrategicaId);
-        acoesSelecionadas = acao ? [acao] : [{ id: registro.acaoEstrategicaId, diretriz: registro.acaoEstrategicaDiretriz || "" }];
     } else {
         acoesSelecionadas = [];
     }
 
     preencherFormularioComAcoes(acoesSelecionadas);
 
+    camposForm.nome.value = registro.nome || "";
     camposForm.oque.value = registro.oque || "";
     camposForm.porque.value = registro.porque || "";
     camposForm.como.value = registro.como || "";
@@ -1049,6 +1385,7 @@ window.editarRegistro = function(id) {
     camposForm.quanto.value = registro.quanto || "";
     camposForm.impacto.value = registro.impacto || "";
     camposForm.observacao.value = registro.observacao || "";
+    if (camposForm.percentual) camposForm.percentual.value = registro.percentual || "";
 
     idRegistroSendoEditado = registro.id;
 
@@ -1058,15 +1395,6 @@ window.editarRegistro = function(id) {
     tabelaRegistros.style.display = "none";
     if (comiteView) comiteView.style.display = "none";
     if (andamentoView) andamentoView.style.display = "none";
-
-    Swal.fire({
-        icon: registro.status === 'Pendente' ? 'warning' : 'info',
-        title: registro.status === 'Pendente' ? 'Ação devolvida para correção' : 'Rascunho carregado',
-        html: registro.status === 'Pendente'
-            ? `<strong>Parecer do Comitê:</strong><br>${escaparTexto(registro.comentarioComite || '-')}<br><br>Corrija as informações e reenvie para avaliação.`
-            : 'Modifique as informações.',
-        confirmButtonColor: '#2563eb'
-    });
 };
 
 window.enviarRegistroDireto = async function(id) {
@@ -1075,7 +1403,7 @@ window.enviarRegistroDireto = async function(id) {
 
     const reg = registros[index];
     
-    if (!reg.oque || !reg.porque || !reg.como || !reg.quando || !reg.onde || !reg.impacto) {
+    if (!reg.oque || !reg.porque || !reg.como || !reg.quando || !reg.onde || !reg.impacto || reg.percentual === undefined) {
         Swal.fire({
             icon: 'warning',
             title: 'Rascunho incompleto',
@@ -1107,7 +1435,7 @@ window.enviarRegistroDireto = async function(id) {
         Swal.fire({
             icon: 'success',
             title: 'Enviado!',
-            text: 'Sua ação foi enviada para o Comitê com sucesso.',
+            text: 'Sua matriz foi enviada para o Comitê com sucesso.',
             timer: 2000,
             showConfirmButton: false
         });
@@ -1117,103 +1445,108 @@ window.enviarRegistroDireto = async function(id) {
 };
 
 // ==========================================================================
-// 11. LOGIN (Inalterado)
+// 5. GERENCIAMENTO DE LOGIN / LOGOUT
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const loginButton = document.getElementById('loginButton');
-    const loginModal = document.getElementById('loginModal');
-    const closeLoginModal = document.getElementById('closeLoginModal');
-    const loginForm = document.getElementById('loginForm');
+const loginButton = document.getElementById('loginButton');
+const loginModal = document.getElementById('loginModal');
+const closeLoginModal = document.getElementById('closeLoginModal');
+const loginForm = document.getElementById('loginForm');
 
-    if (usuarioLogado && loginButton) {
-        loginButton.textContent = 'Logout';
-        loginButton.classList.add('is-logged-in');
-    }
+if (usuarioLogado && loginButton) {
+    loginButton.textContent = 'Logout';
+    loginButton.classList.add('is-logged-in');
+}
 
-    if (loginButton && loginModal && closeLoginModal) {
-        loginButton.onclick = async () => {
-            if (estaLogado()) {
-                const result = await Swal.fire({
-                    title: 'Sair da sessão?',
-                    text: 'Você tem certeza que deseja fazer logout?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#e63946',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sim, sair',
-                    cancelButtonText: 'Cancelar'
-                });
+if (loginButton && loginModal && closeLoginModal) {
+    loginButton.onclick = async () => {
+        if (estaLogado()) {
+            const result = await Swal.fire({
+                title: 'Sair da sessão?',
+                text: 'Você tem certeza que deseja fazer logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#e63946',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sim, sair',
+                cancelButtonText: 'Cancelar'
+            });
 
-                if (result.isConfirmed) {
-                    limparSessao();
-                    loginButton.textContent = 'Login';
-                    loginButton.classList.remove('is-logged-in');
-                    atualizarVisibilidadeMenu();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Logout realizado!',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
-                }
-            } else {
-                loginModal.style.display = 'flex';
-            }
-        };
-        closeLoginModal.onclick = () => loginModal.style.display = 'none';
-    }
-
-    if (loginForm) {
-        loginForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('username').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-
-            const usuarioEncontrado = db.usuarios.find((u) => u.email === email && u.senha === password);
-
-            if (usuarioEncontrado) {
-                salvarSessao(usuarioEncontrado);
-                loginModal.style.display = 'none';
-                loginButton.textContent = 'Logout';
-                loginButton.classList.add('is-logged-in');
+            if (result.isConfirmed) {
+                limparSessao();
+                loginButton.textContent = 'Login';
+                loginButton.classList.remove('is-logged-in');
                 atualizarVisibilidadeMenu();
-
-                if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
-
-                document.getElementById('username').value = "";
-                document.getElementById('password').value = "";
+                
+                heroSection.style.display = "block";
+                acoesTableContainer.style.display = "none";
+                formulario.style.display = "none";
+                tabelaRegistros.style.display = "none";
+                if (comiteView) comiteView.style.display = "none";
+                if (andamentoView) andamentoView.style.display = "none";
+                if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Login realizado!',
-                    text: `Bem-vindo, ${usuarioEncontrado.email}`,
-                    timer: 2000,
+                    title: 'Logout realizado!',
+                    timer: 1500,
                     showConfirmButton: false
                 });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro no login',
-                    text: 'E-mail ou senha incorretos!',
-                    confirmButtonColor: '#2563eb'
-                });
             }
-        };
-    }
+        } else {
+            loginModal.style.display = 'flex';
+        }
+    };
+    closeLoginModal.onclick = () => loginModal.style.display = 'none';
+}
 
-    // Inicialização
-    heroSection.style.display = 'block';
-    acoesTableContainer.style.display = 'none';
-    formulario.style.display = 'none';
-    tabelaRegistros.style.display = 'none';
-    if (comiteView) comiteView.style.display = "none";
-    if (andamentoView) andamentoView.style.display = "none";
-    atualizarVisibilidadeMenu();
-});
+if (loginForm) {
+    loginForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('username').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+
+        const usuarioEncontrado = db.usuarios.find((u) => u.email === email && u.senha === password);
+
+        if (usuarioEncontrado) {
+            salvarSessao(usuarioEncontrado);
+            loginModal.style.display = 'none';
+            loginButton.textContent = 'Logout';
+            loginButton.classList.add('is-logged-in');
+            atualizarVisibilidadeMenu();
+
+            if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
+
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Login realizado!',
+                text: `Bem-vindo, ${usuarioEncontrado.email}`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro no login',
+                text: 'E-mail ou senha incorretos!',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+    };
+}
+
+heroSection.style.display = 'block';
+acoesTableContainer.style.display = 'none';
+formulario.style.display = 'none';
+tabelaRegistros.style.display = 'none';
+if (comiteView) comiteView.style.display = "none";
+if (andamentoView) andamentoView.style.display = "none";
+atualizarVisibilidadeMenu();
 
 // ==========================================================================
-// LÓGICA DO PAINEL DO ADMINISTRADOR (FRONTEND MOCK)
+// 6. LÓGICA DO PAINEL DO ADMINISTRADOR
 // ==========================================================================
 const btnAdminGeral = document.getElementById("btnAdminGeral");
 const adminView = document.getElementById("adminView");
@@ -1223,12 +1556,12 @@ if (btnAdminGeral) {
     btnAdminGeral.onclick = () => {
         if (!exigirLogin() || usuarioLogado.role !== 'admin') return;
         
-        document.getElementById("heroSection").style.display = "none";
-        document.getElementById("acoesTableContainer").style.display = "none";
-        document.getElementById("formularioContainer").style.display = "none";
-        document.getElementById("registroView").style.display = "none";
-        if (document.getElementById("comiteView")) document.getElementById("comiteView").style.display = "none";
-        if (document.getElementById("andamentoView")) document.getElementById("andamentoView").style.display = "none";
+        heroSection.style.display = "none";
+        acoesTableContainer.style.display = "none";
+        formulario.style.display = "none";
+        tabelaRegistros.style.display = "none";
+        if (comiteView) comiteView.style.display = "none";
+        if (andamentoView) andamentoView.style.display = "none";
         
         adminView.style.display = "block";
         renderizarTabelaAdminUsuarios();
@@ -1238,28 +1571,10 @@ if (btnAdminGeral) {
 if (btnVoltarAcoesDoAdmin) {
     btnVoltarAcoesDoAdmin.onclick = () => {
         adminView.style.display = "none";
-        document.getElementById("acoesTableContainer").style.display = "block";
+        acoesTableContainer.style.display = "block";
         renderizarTabelaAcoes();
     };
 }
-
-const adminTabs = document.querySelectorAll("#adminTabs .filtro-btn");
-const adminTabContents = document.querySelectorAll(".admin-tab-content");
-
-adminTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        adminTabs.forEach(t => t.classList.remove("active"));
-        adminTabContents.forEach(c => c.style.display = "none");
-        
-        tab.classList.add("active");
-        const targetId = tab.getAttribute("data-tab");
-        document.getElementById(targetId).style.display = "block";
-
-        if (targetId === "tabAdminAcoes") {
-            renderizarTabelaAdminAcoes();
-        }
-    });
-});
 
 function renderizarTabelaAdminUsuarios() {
     const tbody = document.getElementById("adminUsuariosBody");
@@ -1279,13 +1594,93 @@ function renderizarTabelaAdminUsuarios() {
             <td><strong>${u.email}</strong></td>
             <td><span class="${badgeClasse}" style="font-size: 0.7rem;">${nomePerfil}</span></td>
             <td>
-                <button class="button-editar" title="Editar Usuário" onclick="alert('Requer Backend')"><i class="bi bi-pencil-square"></i></button>
-                <button class="button-excluir" title="Excluir Usuário" onclick="alert('Requer Backend')"><i class="bi bi-trash3-fill"></i></button>
+                <button class="button-editar" title="Editar Perfil" onclick="editarUsuario('${u.email}')"><i class="bi bi-pencil-square"></i></button>
+                <button class="button-excluir" title="Excluir Usuário" onclick="excluirUsuario('${u.email}')"><i class="bi bi-trash3-fill"></i></button>
             </td>
         `;
         tbody.appendChild(linha);
     });
 }
+
+window.editarUsuario = async function(email) {
+    const usuario = db.usuarios.find(u => u.email === email);
+    if (!usuario) return;
+
+    const { value: novoPerfil } = await Swal.fire({
+        title: `Editar Usuário`,
+        html: `Alterar o perfil de acesso de <strong>${email}</strong>:`,
+        input: 'select',
+        inputOptions: {
+            'usuario': 'Usuário Comum (Lançador)',
+            'comite': 'Conselheiro (Avaliação)',
+            'admin': 'Administrador (Sistema)'
+        },
+        inputValue: usuario.role,
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Salvar Alteração',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (novoPerfil && novoPerfil !== usuario.role) {
+        usuario.role = novoPerfil;
+        salvarBanco();
+        renderizarTabelaAdminUsuarios();
+        
+        if (usuarioLogado && usuarioLogado.email === email) {
+            salvarSessao(usuario);
+            atualizarVisibilidadeMenu();
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Atualizado!',
+            text: 'O perfil do usuário foi alterado com sucesso.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+};
+
+window.excluirUsuario = async function(email) {
+    if (usuarioLogado && usuarioLogado.email === email) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Ação Negada',
+            text: 'Você não pode excluir a sua própria conta enquanto estiver logado.',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
+    const result = await Swal.fire({
+        title: 'Excluir Usuário?',
+        html: `Tem certeza que deseja remover o acesso de <strong>${email}</strong> permanentemente?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        const index = db.usuarios.findIndex(u => u.email === email);
+        if (index > -1) {
+            db.usuarios.splice(index, 1);
+            salvarBanco();
+            renderizarTabelaAdminUsuarios();
+            Swal.fire({
+                icon: 'success',
+                title: 'Excluído!',
+                text: 'Usuário removido do sistema.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    }
+};
 
 function renderizarTabelaAdminAcoes() {
     const tbody = document.getElementById("adminAcoesBody");
@@ -1405,4 +1800,181 @@ window.excluirAcaoBase = function(id) {
             }
         }
     });
+};
+
+const adminTabs = document.querySelectorAll("#adminTabs .filtro-btn");
+const adminTabContents = document.querySelectorAll(".admin-tab-content");
+
+adminTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        adminTabs.forEach(t => t.classList.remove("active"));
+        adminTabContents.forEach(c => c.style.display = "none");
+        
+        tab.classList.add("active");
+        const targetId = tab.getAttribute("data-tab");
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) targetContent.style.display = "block";
+
+        if (targetId === "tabAdminAcoes") renderizarTabelaAdminAcoes();
+        if (targetId === "tabAdminUsuarios") renderizarTabelaAdminUsuarios();
+        if (targetId === "tabAdminGestaoDados") renderizarTabelaAdminGestaoDados();
+        if (targetId === "tabAdminErros") renderizarTabelaAdminErros();
+        if (targetId === "tabAdminLogs") renderizarTabelaAdminLogs();
+    });
+});
+
+function renderizarTabelaAdminErros() {
+    const tbody = document.getElementById("adminErrosBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const erros = [];
+    const agora = new Date().toLocaleString();
+
+    const acoes = window.acoesEstrategicas || [];
+    const idsVistos = new Set();
+    const duplicadas = new Set();
+
+    acoes.forEach(acao => {
+        if (idsVistos.has(acao.id)) {
+            duplicadas.add(acao.id);
+        } else {
+            idsVistos.add(acao.id);
+        }
+    });
+
+    duplicadas.forEach(id => {
+        erros.push({
+            msg: `Ação Base duplicada detectada no banco de dados. ID em conflito: ${id}`,
+            stack: "Fonte: acoes_data.js -> array acoesEstrategicas"
+        });
+    });
+
+    if (erros.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="table-empty-state" style="color: #16a34a;">Nenhum erro de integridade encontrado. O banco de dados está saudável! 🎉</td></tr>`;
+        return;
+    }
+
+    erros.forEach(erro => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${agora}</td>
+            <td style="color: #e63946;"><strong><i class="bi bi-exclamation-triangle-fill"></i> ${erro.msg}</strong></td>
+            <td><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${erro.stack}</code></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+const modalNovoUsuario = document.getElementById("modalNovoUsuario");
+const btnNovoUsuario = document.getElementById("btnNovoUsuario");
+const closeModalNovoUsuario = document.getElementById("closeModalNovoUsuario");
+const formNovoUsuario = document.getElementById("formNovoUsuario");
+
+if (btnNovoUsuario) {
+    btnNovoUsuario.onclick = () => {
+        formNovoUsuario.reset();
+        modalNovoUsuario.style.display = "flex";
+    };
+}
+
+if (closeModalNovoUsuario) {
+    closeModalNovoUsuario.onclick = () => {
+        modalNovoUsuario.style.display = "none";
+    };
+}
+
+if (modalNovoUsuario) {
+    modalNovoUsuario.addEventListener('click', (e) => {
+        if (e.target === modalNovoUsuario) modalNovoUsuario.style.display = 'none';
+    });
+}
+
+if (formNovoUsuario) {
+    formNovoUsuario.onsubmit = (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("novoUsuarioEmail").value.trim().toLowerCase();
+        const perfil = document.getElementById("novoUsuarioPerfil").value;
+
+        const usuarioExiste = db.usuarios.find(u => u.email === email);
+        if (usuarioExiste) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Usuário já cadastrado',
+                text: 'Este e-mail já possui um cadastro ativo no sistema.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+
+        const novoUsuario = {
+            email: email,
+            senha: "mudar@123",
+            role: perfil
+        };
+
+        db.usuarios.push(novoUsuario);
+        salvarBanco(); 
+
+        modalNovoUsuario.style.display = "none";
+        renderizarTabelaAdminUsuarios();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Convite Enviado!',
+            html: `O cadastro de <strong>${email}</strong> foi iniciado.<br><br>Um e-mail foi disparado para que o usuário defina sua senha.<br><br><small style="color: #64748b;">(Mock: Para testar o login dele agora, utilize a senha temporária <b>mudar@123</b>)</small>`,
+            confirmButtonColor: '#16a34a'
+        });
+    };
+}
+
+function renderizarTabelaAdminLogs() {
+    const tbody = document.getElementById("adminLogsBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const logsMock = [
+        { time: new Date().toLocaleString(), user: usuarioLogado ? usuarioLogado.email : "Sistema", action: "Acesso", detalhes: "Login no painel administrativo e carregamento das métricas." },
+        { time: new Date(Date.now() - 15 * 60000).toLocaleString(), user: "comite@email.com", action: "Consulta", detalhes: "Filtrou matrizes por prazo longo no Dashboard." },
+        { time: new Date(Date.now() - 120 * 60000).toLocaleString(), user: "usuario@email.com", action: "Sessão", detalhes: "Token expirado. Logout automático realizado." }
+    ];
+
+    logsMock.forEach(log => {
+        const tr = document.createElement("tr");
+        let badgeClass = log.action === "Acesso" ? "badge-aprovado" : (log.action === "Consulta" ? "badge-enviado" : "badge-rascunho");
+        
+        tr.innerHTML = `
+            <td>${log.time}</td>
+            <td><strong>${log.user}</strong></td>
+            <td><span class="${badgeClass}" style="font-size: 0.75rem;">${log.action}</span></td>
+            <td>${log.detalhes}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+if (btnAndamento) {
+    btnAndamento.onclick = () => {
+        if (!exigirLogin()) return;
+        heroSection.style.display = "none";
+        acoesTableContainer.style.display = "none";
+        formulario.style.display = "none";
+        tabelaRegistros.style.display = "none";
+        if (comiteView) comiteView.style.display = "none";
+        if (document.getElementById("adminView")) document.getElementById("adminView").style.display = "none";
+        
+        andamentoView.style.display = "block";
+        
+        if (typeof popularFiltrosDashboard === 'function') popularFiltrosDashboard();
+        if (typeof atualizarDashboard === 'function') atualizarDashboard();
+    };
+}
+
+if (btnVoltarAcoesDoAndamento) {
+    btnVoltarAcoesDoAndamento.onclick = () => {
+        andamentoView.style.display = "none";
+        acoesTableContainer.style.display = "block";
+        renderizarTabelaAcoes();
+    };
 }

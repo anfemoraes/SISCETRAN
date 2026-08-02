@@ -1,27 +1,3 @@
-// ==========================================================================
-// DADOS OFICIAIS DO PLANO DE TRABALHO CETRAN/PETRANS
-// Fonte única: Plano_de_Trabalho_Cetran-PA_2030.xlsx, aba "Diretrizes"
-// (hierarquia oficial Objetivo de Governo -> Linha de Ação Estratégica -> Ação
-// Estratégica). O campo "indicador" foi importado da aba "Geral" da mesma
-// planilha, casado pelo código da AE (é o único campo ausente em "Diretrizes").
-//
-// AVISOS DE QUALIDADE DE DADOS DETECTADOS NA PLANILHA OFICIAL (não corrigidos
-// automaticamente — apenas registrados aqui e exibidos no Dashboard):
-//   - ID duplicado na fonte: ['AE 4.1.1.1'] (duas diretrizes diferentes sob o mesmo
-//     código, causado por um cabeçalho repetido nas linhas 130-141 da planilha).
-//   - 6 ações existem na aba "Geral" mas NÃO aparecem na aba oficial
-//     "Diretrizes" (provável perda de dados na mesma área corrompida da planilha):
-//     AE 3.5.2.3
-//     AE 4.2.1.1
-//     AE 4.2.1.2
-//     AE 4.2.1.3
-//     AE 4.2.1.4
-//     AE 4.2.1.5
-//   - 3 ações da planilha oficial têm campos em branco (Prazo/Setor/Meta/Restrições):
-//     AE 4.1.1.6: faltando Prazo para Consecução da AE, Setor Responsável pela AE, Metas a serem Cumpridas, Restrições para a AE
-//     AE 4.2.1.6: faltando Prazo para Consecução da AE, Setor Responsável pela AE, Metas a serem Cumpridas, Restrições para a AE
-//     AE 4.2.1.7: faltando Prazo para Consecução da AE, Setor Responsável pela AE, Metas a serem Cumpridas, Restrições para a AE
-// ==========================================================================
 
 const acoesEstrategicas = [
     {
@@ -605,12 +581,13 @@ const acoesEstrategicas = [
         diretriz: "Adotar uma abordagem modular e faseada, começando com um diagnóstico detalhado e priorizando os módulos de maior impacto e avançando para modelos completos como GIT/GPROC) para otimização do fluxo de trabalho e gestão do conhecimento, buscando parcerias com empresas de TI ou órgãos públicos que já possuam tais sistemas, como o Cetran/PR.",
         prazo: "Médio Prazo",
         setor: "Secretaria-Executiva, TI do Cetran",
+        setor: "Secretaria-Executiva, InfoCetran",
         meta: "Sistemas de recursos.\nSistema de Municípios.\nSistema Conselheiros.\nSistema Atendimento.\n",
         indicador: "% de sistemas integrados de gestão implementados ou adaptados.",
         restricoes: "Apoio de TI especializada e recursos para desenvolvimento/aquisição.",
         linhaPlanilha: 43,
         dadosIncompletos: [],
-        responsavel: "Secretaria-Executiva, TI do Cetran"
+        responsavel: "Secretaria-Executiva, InfoCetran"
     },
     {
         id: "AE 2.1.1.3",
@@ -619,12 +596,13 @@ const acoesEstrategicas = [
         diretriz: "Formalizar tratativa com CELEPAR para implantação do sistema GIT/GPROC, fortalecendo a base integrada de dados do estado.",
         prazo: "Curto Prazo",
         setor: "Secretaria-Executiva, TI do Cetran",
+        setor: "Secretaria-Executiva, InfoCetran",
         meta: "Tratativa com CELEPAR formalizada e proposta apresentada.",
         indicador: "Formalização da tratativa com CELEPAR.",
         restricoes: "Disponibilidade e interesse da CELEPAR.",
         linhaPlanilha: 44,
         dadosIncompletos: [],
-        responsavel: "Secretaria-Executiva, TI do Cetran"
+        responsavel: "Secretaria-Executiva, InfoCetran"
     },
     {
         id: "AE 2.1.1.4",
@@ -759,12 +737,13 @@ const acoesEstrategicas = [
         diretriz: "Implementar plataforma tecnológica robusta, com Big Data e IA, para coleta, processamento e análise preditiva de sinistralidade.\nPromover parcerias com universidades e centros de pesquisa para desenvolvimento de análises preditivas.\nFortalecer parcerias com universidades e centros de pesquisa (MIT, UFPA, UEPA) para co-desenvolvimento e capacitação de RH, reduzindo a dependência de contratações imediatas.",
         prazo: "Longo Prazo",
         setor: "GeoCetran, TI do Cetran",
+        setor: "GeoCetran, InfoCetran",
         meta: "Plataforma tecnológica do Observatório com Big Data/IA implementada.",
         indicador: "Publicação do painel de indicadores.",
         restricoes: "Recursos financeiros e expertise em Big Data/IA.",
         linhaPlanilha: 54,
         dadosIncompletos: [],
-        responsavel: "GeoCetran, TI do Cetran"
+        responsavel: "GeoCetran, InfoCetran"
     },
     {
         id: "AE 2.2.1.8",
@@ -1025,12 +1004,13 @@ const acoesEstrategicas = [
         diretriz: "Avaliar continuamente as estruturas de suporte técnico especializado para manutenção e atualização dos sistemas de comunicação entre os órgãos.",
         prazo: "Médio Prazo",
         setor: "Secretaria-Executiva, TI do Cetran",
+        setor: "Secretaria-Executiva, InfoCetran",
         meta: "Relatórios de avaliação do suporte técnico e planos de melhoria elaborados.",
         indicador: "Publicação de relatórios de avaliação do suporte técnico.",
         restricoes: "Disponibilidade de expertise técnica para avaliação.",
         linhaPlanilha: 73,
         dadosIncompletos: [],
-        responsavel: "Secretaria-Executiva, TI do Cetran"
+        responsavel: "Secretaria-Executiva, InfoCetran"
     },
     {
         id: "AE 2.4.1.1",
@@ -1697,12 +1677,13 @@ const acoesEstrategicas = [
         diretriz: "Ampliar uso de tecnologia (sensores, câmeras corporais, registro digital) para transparência, reduzindo discricionariedade e monitorando conduta.",
         prazo: "Longo Prazo",
         setor: "CTSEG, TI do Cetran",
+        setor: "CTSEG, InfoCetran",
         meta: "Tecnologias para monitoramento e transparência implementadas em fases.",
         indicador: "Número de tecnologias para monitoramento e transparência implementadas.",
         restricoes: "Recursos para aquisição e implantação de tecnologia.",
         linhaPlanilha: 121,
         dadosIncompletos: [],
-        responsavel: "CTSEG, TI do Cetran"
+        responsavel: "CTSEG, InfoCetran"
     },
     {
         id: "AE 3.6.2.1",
@@ -2027,6 +2008,9 @@ const acoesEstrategicas = [
         responsavel: "CTSEG"
     },
 ];
+
+// Expor para compatibilidade com scripts legados que esperam `window.acoesEstrategicas`
+if (typeof window !== 'undefined') window.acoesEstrategicas = acoesEstrategicas;
 window.acoesEstrategicas = acoesEstrategicas;
 
 // Metadados de qualidade de dados, para exibição transparente no Dashboard.

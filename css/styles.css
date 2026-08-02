@@ -259,8 +259,8 @@ input:focus, textarea:focus, select:focus {
    ========================================================================== */
 .button-admin {
   background-color: transparent !important;
-  color: #7c3aed !important;
-  border: 1px dashed #7c3aed !important;
+  color: #463aed !important;
+  border: 1px solid #0a54f5 !important;
 }
 .button-admin:hover {
   background-color: #f5f3ff !important;
@@ -524,7 +524,7 @@ input:focus, textarea:focus, select:focus {
 .actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
+  justify-content: center;
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
@@ -542,13 +542,24 @@ input:focus, textarea:focus, select:focus {
   pointer-events: auto;
   transform: translateY(0);
 }
+#floatingDetalharBtn {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px); /* Empurra 20px para baixo */
+    transition: all 0.3s ease-in-out; /* Cria o efeito suave de animação */
+}
 
+/* Quando o JavaScript detectar o clique na caixinha, ele adiciona essa classe */
+#floatingDetalharBtn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0); /* Volta para a posição original na tela */
+}
 #floatingDetalharBtn button {
   background-color: var(--primary);
   color: white;
   font-weight: 600;
   box-shadow: 0 10px 15px -3px rgba(0, 86, 179, 0.3);
-  transform: scale(1);
 }
 #floatingDetalharBtn button:hover {
   background-color: var(--primary-hover);
@@ -1164,4 +1175,145 @@ tr:hover td {
 .button-excluir:hover{
     transform:scale(1.2);
     color:#b02a37;
+}
+
+td span[class*="badge"], 
+td span[class*="status"],
+.dashboard-status-pill {
+    white-space: nowrap; 
+    display: inline-block;
+}
+
+.footer {
+    text-align: center;          /* Centraliza o texto */
+    padding: 1.5rem 0;           /* Dá um "respiro" em cima e embaixo */
+    width: 100%;                 /* Garante que ocupe a tela toda */
+    background-color: transparent; /* Deixa o fundo limpo (opcional) */
+    color: var(--muted-foreground, #64748b); /* Usa a cor de texto secundária */
+    font-size: 0.9rem;           /* Deixa a fonte num tamanho agradável */
+    margin-top: 2rem;            /* Descola o footer do conteúdo de cima */
+}
+
+/* Garante que o parágrafo dentro dele não tenha margens indesejadas que o empurrem pro lado */
+.footer p {
+    margin: 0;
+}
+/* ==========================================================================
+   CENTRALIZAÇÃO DO PAINEL DE ADMINISTRAÇÃO
+   ========================================================================== */
+
+/* 1. Centraliza a estrutura principal do painel na tela para não esticar demais */
+#adminView {
+    max-width: 1200px;
+    margin: 0 auto; /* O segredo mágico para centralizar a caixa inteira */
+    padding: 2rem 1rem;
+}
+
+/* 2. Centraliza o título, mas crava o botão de "Voltar" no canto esquerdo */
+#adminView .comite-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    position: relative;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+#btnVoltarAcoesDoAdmin {
+    position: absolute;
+    left: 0; 
+}
+
+/* 3. Centraliza os botões das abas (Usuários, Ações, Erros, Logs) */
+#adminTabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap; /* Evita que os botões quebrem em telas menores */
+}
+/* ==========================================================================
+   CENTRALIZAÇÃO GERAL DOS PAINÉIS (CORRIGIDO)
+   ========================================================================== */
+
+/* 1. Limita a largura e centraliza os painéis principais na tela */
+#acoesTableContainer, 
+#formularioContainer, 
+#registroView, 
+#comiteView, 
+#andamentoView {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* 2. Centraliza os títulos simples */
+#acoesTableContainer > h2, 
+#acoesTableContainer > p,
+#formularioContainer > h2 {
+    text-align: center;
+}
+
+/* 3. Painel do Comitê (Texto curto: mantém o botão absoluto) */
+.comite-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    position: relative;
+    margin-bottom: 2rem;
+    text-align: center;
+    width: 100%;
+}
+.comite-header > button:first-child {
+    position: absolute;
+    left: 0;
+}
+
+/* 4. DASHBOARD (CORREÇÃO): Usa Grid para proteger o subtítulo longo */
+.dashboard-header {
+    display: grid;
+    /* Cria 3 colunas invisíveis: Botão | Texto Central | Espaço vazio para equilibrar */
+    grid-template-columns: 200px 1fr 200px; 
+    align-items: center;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+.dashboard-header > button:first-child {
+    justify-self: start; /* Trava o botão na esquerda */
+}
+.dashboard-header-title {
+    text-align: center;
+    grid-column: 2; /* Garante que o título fique na coluna larga do meio */
+}
+
+/* 5. Painel de Consultar Ações */
+#registroView {
+    position: relative;
+}
+#registroView h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-top: 0.5rem;
+}
+#registroView > div:nth-child(2) {
+    position: absolute;
+    top: 2rem;
+    left: 1rem;
+    margin: 0 !important; 
+}
+
+/* 6. Centraliza os filtros */
+.comite-filtros, 
+#dashboardFiltros {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+/* Botão de Administração Flutuante */
+#btnAdminGeral,
+.button-admin {
+    position: static !important;
+    float: none !important;
+    box-shadow: none; /* Se quiser remover sombras flutuantes antigas */
 }
