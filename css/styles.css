@@ -5,7 +5,7 @@
   --font-size: 15px;
   --background: #f8f9fa; /* Cinza bem claro institucional para o fundo */
   --foreground: #333333; /* Texto escuro com bom contraste */
-  --card: #ffffff;       /* Cards e containers agora são brancos e limpos */
+  --card: #ffffff;      /* Cards e containers agora são brancos e limpos */
   --top: #ffffff;        /* Header totalmente branco */
   --card-foreground: #333333;
   --popover: #ffffff;
@@ -195,7 +195,7 @@ label {
 
 .button-outline {
   background-color: transparent !important;
-  color: #d97706 !important; /* Cor de rascunho refinada */
+  color: #d97706 !important; 
   border: 1px dashed #f59e0b !important;
 }
 
@@ -226,7 +226,6 @@ label {
   margin-top: 1.5rem;
 }
 
-/* Hack para fazer campos específicos ocuparem largura total na grid */
 .formulario-2 .field:nth-child(1),
 .formulario-2 .field:nth-child(2),
 .formulario-2 .field:nth-child(5) {
@@ -536,7 +535,6 @@ input:focus, textarea:focus, select:focus {
 }
 #btnVoltarAcoes:hover, #btnVoltarAcoesDaConsulta:hover { background-color: #cbd5e1; }
 
-/* Botão Flutuante moderno */
 #floatingDetalharBtn.visible {
   opacity: 1;
   pointer-events: auto;
@@ -545,15 +543,14 @@ input:focus, textarea:focus, select:focus {
 #floatingDetalharBtn {
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px); /* Empurra 20px para baixo */
-    transition: all 0.3s ease-in-out; /* Cria o efeito suave de animação */
+    transform: translateY(20px); 
+    transition: all 0.3s ease-in-out; 
 }
 
-/* Quando o JavaScript detectar o clique na caixinha, ele adiciona essa classe */
 #floatingDetalharBtn.visible {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0); /* Volta para a posição original na tela */
+    transform: translateY(0); 
 }
 #floatingDetalharBtn button {
   background-color: var(--primary);
@@ -567,7 +564,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ==========================================================================
-   7. TABELAS (Limpa e Espaçada, Padrão Governamental Moderno)
+   7. TABELAS
    ========================================================================== */
 .table-container {
   width: 100%;
@@ -609,7 +606,6 @@ tr:hover td {
   cursor: pointer;
 }
 
-/* Badges e Status */
 .badge-rascunho, .badge-enviado, .badge-aprovado, .badge-reprovado {
   padding: 0.35rem 0.75rem;
   border-radius: 50px;
@@ -623,7 +619,6 @@ tr:hover td {
 .badge-reprovado { background-color: #fee2e2; color: #991b1b; }
 .badge-pendente { background-color: #ffe4d6; color: #c2410c; }
 
-/* Badges de Prazo (coluna oficial "Prazo para Consecução da AE") */
 .badge-curto-prazo { background-color: #d1fae5; color: #065f46; padding: 0.35rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
 .badge-medio-prazo { background-color: #fef3c7; color: #92400e; padding: 0.35rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
 .badge-longo-prazo { background-color: #fee2e2; color: #991b1b; padding: 0.35rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
@@ -640,7 +635,7 @@ tr:hover td {
   justify-content: center;
   text-align: center;
   padding: 2rem;
-  background: var(--primary-dark); /* Azul escuro corporativo sólido */
+  background: var(--primary-dark); 
   color: white;
   border-radius: var(--radius);
   margin: 1.5rem auto;
@@ -668,7 +663,6 @@ tr:hover td {
 /* ==============================
    MODAL DE LOGIN CENTRALIZADO
    ============================== */
-
 .modal {
     position: fixed;
     inset: 0;
@@ -681,7 +675,6 @@ tr:hover td {
     z-index: 9999;
 }
 
-
 .modal-content {
     width: 380px;
     max-width: 90%;
@@ -693,23 +686,19 @@ tr:hover td {
     animation: aparecerLogin 0.25s ease;
 }
 
-
 .modal-content h2 {
     color: #003366;
     font-size: 1.4rem;
     margin-bottom: 1.5rem;
 }
 
-
 .modal-content label {
     color: #495057;
 }
 
-
 .modal-content input {
     margin-bottom: 1rem;
 }
-
 
 .close {
     float: right;
@@ -718,11 +707,9 @@ tr:hover td {
     color: #6c757d;
 }
 
-
 .close:hover {
     color: #dc3545;
 }
-
 
 @keyframes aparecerLogin {
     from {
@@ -746,11 +733,7 @@ tr:hover td {
 
 /* ==========================================================================
    11. MEDIA QUERIES
-   Breakpoints: Full HD/Wide (padrão), Notebook (<=1366px), Tablet (<=992px),
-   Mobile (<=768px), Mobile pequeno (<=480px).
    ========================================================================== */
-
-/* ---- Notebooks (telas ~1280–1366px) ---- */
 @media (max-width: 1366px) {
   .acoes-table-container, .formulario-container, #registroView,
   .comite-container {
@@ -758,7 +741,6 @@ tr:hover td {
   }
 }
 
-/* ---- Tablets (~992px) ---- */
 @media (max-width: 992px) {
   .container { padding: 0 1rem; }
   .actions-menu .button { min-width: 200px; flex: 1 1 200px; }
@@ -772,12 +754,11 @@ tr:hover td {
   .modal-avaliacao-content { width: 90%; }
 }
 
-/* ---- Mobile (~768px) ---- */
 @media (max-width: 768px) {
   .header { padding: 1rem; flex-direction: column; align-items: center; text-align: center; }
   .header-brand { flex-direction: column; gap: 0.5rem; }
   .header-text { border-left: none; padding-left: 0; }
-  .login-container { margin: 0 auto; width: 100%; display: flex; justify-content: center; }
+  .login-container { margin: 0 auto; width: 100%; display: flex; justify-content: center; gap: 8px !important; }
   .actions-menu { flex-direction: column; }
   .actions-menu .button { width: 100%; min-width: unset; flex: unset; }
   .acoes-table-container, .formulario-container, #registroView { width: auto; padding: 1rem; margin: 1rem; }
@@ -786,22 +767,18 @@ tr:hover td {
   .actions { flex-direction: column-reverse; }
   .actions button { width: 100%; }
 
-  /* Tabelas: fonte menor e rolagem horizontal suave em telas pequenas */
   table { font-size: 0.8rem; }
   th, td { padding: 0.6rem 0.75rem; white-space: nowrap; }
   .table-container { -webkit-overflow-scrolling: touch; }
 
-  /* Modais ocupam quase toda a largura, com altura controlada */
   .modal-content { width: 92%; padding: 1.5rem; }
   .modal-avaliacao-content { width: 94%; max-height: 88vh; }
 
-  /* Formulários em coluna única */
   .formulario-2 { grid-template-columns: 1fr; }
   .formulario-2 .field:nth-child(1),
   .formulario-2 .field:nth-child(2),
   .formulario-2 .field:nth-child(5) { grid-column: 1; }
 
-  /* Botão flutuante não deve invadir a borda da tela */
   #floatingDetalharBtn { right: 16px; bottom: 16px; }
   #floatingDetalharBtn button { padding: 0.85rem 1.5rem; font-size: 1rem; }
 
@@ -809,7 +786,6 @@ tr:hover td {
   .admin-tabela-wrapper { overflow-x: auto; }
 }
 
-/* ---- Mobile pequeno (~480px) ---- */
 @media (max-width: 480px) {
   .header-text h1 { font-size: 1.15rem; }
   .hero-section { padding: 1.25rem; min-height: 170px; }
@@ -856,11 +832,11 @@ tr:hover td {
    ========================================================================== */
 .button-comite {
   background-color: transparent !important;
-  color: var(--primary) !important;
-  border: 1px dashed var(--primary) !important;
+  color: #5b21b6 !important;
+  border: 1px solid #7c3aed !important;
 }
 .button-comite:hover {
-  background-color: #eff6ff !important;
+  background-color: #f5f3ff !important;
   transform: translateY(-2px);
 }
 
@@ -878,8 +854,16 @@ tr:hover td {
 .comite-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  justify-content: center; 
+  position: relative;
+  margin-bottom: 2rem;
+  text-align: center;
+  width: 100%;
+}
+
+.comite-header > button:first-child {
+  position: absolute;
+  left: 0;
 }
 
 .comite-header h2 {
@@ -1141,9 +1125,23 @@ tr:hover td {
 .button-reprovar-modal { background-color: var(--destructive); }
 .button-reprovar-modal:hover { background-color: #c82333; }
 
+/* Ajuste Responsivo do Comitê para Celular */
 @media (max-width: 768px) {
   .comite-container { width: auto; padding: 1rem; margin: 1rem; }
-  .comite-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  
+  .comite-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    position: static; 
+    text-align: center;
+  }
+
+  .comite-header > button:first-child {
+    position: static;
+    width: 100%; 
+  }
+
   .comite-cards-grid { grid-template-columns: 1fr; }
   .detalhe-avaliacao-botoes { flex-direction: column-reverse; }
   .detalhe-avaliacao-botoes button { width: 100%; }
@@ -1185,31 +1183,28 @@ td span[class*="status"],
 }
 
 .footer {
-    text-align: center;          /* Centraliza o texto */
-    padding: 1.5rem 0;           /* Dá um "respiro" em cima e embaixo */
-    width: 100%;                 /* Garante que ocupe a tela toda */
-    background-color: transparent; /* Deixa o fundo limpo (opcional) */
-    color: var(--muted-foreground, #64748b); /* Usa a cor de texto secundária */
-    font-size: 0.9rem;           /* Deixa a fonte num tamanho agradável */
-    margin-top: 2rem;            /* Descola o footer do conteúdo de cima */
+    text-align: center;           
+    padding: 1.5rem 0;             
+    width: 100%;                   
+    background-color: transparent; 
+    color: var(--muted-foreground, #64748b); 
+    font-size: 0.9rem;             
+    margin-top: 2rem;              
 }
 
-/* Garante que o parágrafo dentro dele não tenha margens indesejadas que o empurrem pro lado */
 .footer p {
     margin: 0;
 }
+
 /* ==========================================================================
    CENTRALIZAÇÃO DO PAINEL DE ADMINISTRAÇÃO
    ========================================================================== */
-
-/* 1. Centraliza a estrutura principal do painel na tela para não esticar demais */
 #adminView {
     max-width: 1200px;
-    margin: 0 auto; /* O segredo mágico para centralizar a caixa inteira */
+    margin: 0 auto; 
     padding: 2rem 1rem;
 }
 
-/* 2. Centraliza o título, mas crava o botão de "Voltar" no canto esquerdo */
 #adminView .comite-header {
     display: flex;
     align-items: center;
@@ -1224,19 +1219,17 @@ td span[class*="status"],
     left: 0; 
 }
 
-/* 3. Centraliza os botões das abas (Usuários, Ações, Erros, Logs) */
 #adminTabs {
     display: flex;
     justify-content: center;
     gap: 1rem;
     margin-bottom: 2rem;
-    flex-wrap: wrap; /* Evita que os botões quebrem em telas menores */
+    flex-wrap: wrap; 
 }
-/* ==========================================================================
-   CENTRALIZAÇÃO GERAL DOS PAINÉIS (CORRIGIDO)
-   ========================================================================== */
 
-/* 1. Limita a largura e centraliza os painéis principais na tela */
+/* ==========================================================================
+   CENTRALIZAÇÃO GERAL DOS PAINÉIS
+   ========================================================================== */
 #acoesTableContainer, 
 #formularioContainer, 
 #registroView, 
@@ -1247,46 +1240,27 @@ td span[class*="status"],
     padding: 2rem 1rem;
 }
 
-/* 2. Centraliza os títulos simples */
 #acoesTableContainer > h2, 
 #acoesTableContainer > p,
 #formularioContainer > h2 {
     text-align: center;
 }
 
-/* 3. Painel do Comitê (Texto curto: mantém o botão absoluto) */
-.comite-header {
-    display: flex;
-    align-items: center;
-    justify-content: center; 
-    position: relative;
-    margin-bottom: 2rem;
-    text-align: center;
-    width: 100%;
-}
-.comite-header > button:first-child {
-    position: absolute;
-    left: 0;
-}
-
-/* 4. DASHBOARD (CORREÇÃO): Usa Grid para proteger o subtítulo longo */
 .dashboard-header {
     display: grid;
-    /* Cria 3 colunas invisíveis: Botão | Texto Central | Espaço vazio para equilibrar */
     grid-template-columns: 200px 1fr 200px; 
     align-items: center;
     margin-bottom: 2rem;
     width: 100%;
 }
 .dashboard-header > button:first-child {
-    justify-self: start; /* Trava o botão na esquerda */
+    justify-self: start; 
 }
 .dashboard-header-title {
     text-align: center;
-    grid-column: 2; /* Garante que o título fique na coluna larga do meio */
+    grid-column: 2; 
 }
 
-/* 5. Painel de Consultar Ações */
 #registroView {
     position: relative;
 }
@@ -1302,7 +1276,6 @@ td span[class*="status"],
     margin: 0 !important; 
 }
 
-/* 6. Centraliza os filtros */
 .comite-filtros, 
 #dashboardFiltros {
     display: flex;
@@ -1310,10 +1283,10 @@ td span[class*="status"],
     flex-wrap: wrap;
     margin-bottom: 2rem;
 }
-/* Botão de Administração Flutuante */
+
 #btnAdminGeral,
 .button-admin {
     position: static !important;
     float: none !important;
-    box-shadow: none; /* Se quiser remover sombras flutuantes antigas */
+    box-shadow: none; 
 }
