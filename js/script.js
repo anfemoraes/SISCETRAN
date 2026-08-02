@@ -298,6 +298,24 @@ function renderizarTabelaAcoes() {
     if (floatingBtn) floatingBtn.classList.remove('visible');
 }
 
+// Listener para filtrar a tabela de ações principais em tempo real
+const inputBuscaAcoes = document.getElementById("inputBuscaAcoes");
+if (inputBuscaAcoes) {
+    inputBuscaAcoes.addEventListener("input", (e) => {
+        const termo = e.target.value.toLowerCase().trim();
+        const linhas = document.querySelectorAll("#acoesTableBody tr");
+
+        linhas.forEach(linha => {
+            const textoLinha = linha.textContent.toLowerCase();
+            if (textoLinha.includes(termo) || linha.classList.contains('table-empty-state')) {
+                linha.style.display = "";
+            } else {
+                linha.style.display = "none";
+            }
+        });
+    });
+}
+
 btnDetalharSelecionada.onclick = () => {
     if (!exigirLogin()) return;
     
@@ -331,7 +349,6 @@ btnDetalharSelecionada.onclick = () => {
     if (floatingBtn) floatingBtn.classList.remove('visible');
 };
 
-// Função para atualizar apenas o visual da lista (usada na criação e edição)
 function atualizarVisorAcoesVinculadas(acoes) {
     listaAcoesVinculadasEl.innerHTML = "";
     acoes.forEach(acao => {
@@ -342,7 +359,6 @@ function atualizarVisorAcoesVinculadas(acoes) {
     });
 }
 
-// Preenche o formulário (zerando os campos, usado apenas ao criar ou carregar tela)
 function preencherFormularioComAcoes(acoes) {
     idRegistroSendoEditado = null;
     atualizarVisorAcoesVinculadas(acoes);
@@ -359,16 +375,20 @@ function preencherFormularioComAcoes(acoes) {
     if (camposForm.percentual) camposForm.percentual.value = "";
 }
 
-// NOVA FUNÇÃO: Abre o modal para alterar as diretrizes sem perder dados do formulário
 window.editarDiretrizesVinculadas = function() {
     if (!window.acoesEstrategicas || window.acoesEstrategicas.length === 0) return;
 
-    let htmlCheckboxes = `<div style="text-align: left; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc;">`;
+    let htmlCheckboxes = `
+        <div style="margin-bottom: 12px;">
+            <input type="text" id="swalInputBusca" placeholder="🔍 Filtrar diretrizes..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+        </div>
+        <div id="swalContainerCheckbox" style="text-align: left; max-height: 320px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc;">
+    `;
     
     window.acoesEstrategicas.forEach(acao => {
         const isChecked = acoesSelecionadas.some(sel => sel.id === acao.id) ? 'checked' : '';
         htmlCheckboxes += `
-            <label style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; font-size: 0.9rem; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <label class="swal-acao-label-item" data-texto="${(acao.id + ' ' + acao.diretriz + ' ' + (acao.setor || '')).toLowerCase()}" style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; font-size: 0.9rem; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 1px solid #e2e8f0;">
                 <input type="checkbox" class="swal-acao-checkbox" value="${acao.id}" ${isChecked} style="margin-top: 3px;">
                 <span><strong>${acao.id}</strong><br><span style="color: #64748b;">${acao.diretriz}</span></span>
             </label>
@@ -384,6 +404,24 @@ window.editarDiretrizesVinculadas = function() {
         confirmButtonText: 'Salvar Seleção',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#2563eb',
+        didOpen: () => {
+            const inputBuscaModal = document.getElementById('swalInputBusca');
+            if (inputBuscaModal) {
+                inputBuscaModal.focus();
+                inputBuscaModal.addEventListener('input', (e) => {
+                    const termo = e.target.value.toLowerCase().trim();
+                    const itens = document.querySelectorAll('.swal-acao-label-item');
+                    itens.forEach(item => {
+                        const dados = item.getAttribute('data-texto');
+                        if (dados.includes(termo)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        },
         preConfirm: () => {
             const checkedNodes = document.querySelectorAll('.swal-acao-checkbox:checked');
             if (checkedNodes.length === 0) {
@@ -399,7 +437,6 @@ window.editarDiretrizesVinculadas = function() {
         }
     }).then(result => {
         if (result.isConfirmed) {
-            // Atualiza a variável global e o visor sem apagar o que já está nos inputs
             acoesSelecionadas = result.value;
             atualizarVisorAcoesVinculadas(acoesSelecionadas);
         }
@@ -494,8 +531,6 @@ btnSalvarRascunho.onclick = async () => {
         if (index !== -1) {
             const registroOriginal = registros[index];
 
-            // Regra de Acréscimo/Versioning: Se a matriz original já foi APROVADA,
-            // criamos uma nova versão vinculada para preservar o histórico do comitê!
             if (registroOriginal.status === "Aprovado") {
                 const novoRegistroAcrescentado = {
                     id: gerarID(),
@@ -671,7 +706,6 @@ btnEnviarComite.onclick = async (e) => {
 function atualizarTabelaRegistros() {
     corpoTabelaRegistros.innerHTML = "";
 
-    const esComite = Boolean(usuarioLogado && (usuarioLogado.role === 'comite' || usuarioLogado.role === 'admin'));
     const esAdmin = Boolean(usuarioLogado && usuarioLogado.role === 'admin');
 
     let dadosFiltrados = registros;
@@ -692,14 +726,12 @@ function atualizarTabelaRegistros() {
         let botoesAcao = "";
 
         if (esAdmin) {
-            // Aprovada -> "Atualizar" (acréscimo, preserva o histórico do comitê).
-            // Rascunho/Enviado/Pendente -> "Editar" (edição direta, ainda não passou pelo comitê).
             const botaoEditarOuAtualizar = registro.status === "Aprovado" ? `
-                <button onclick="editarRegistro('${registro.id}')" class="button-editar" style="color: #7c3aed;" title="Atualizar (adiciona impacto/progresso preservando a versão aprovada)">
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" style="color: #7c3aed;" title="Atualizar">
                     <i class="bi bi-arrow-repeat"></i> Atualizar
                 </button>
             ` : `
-                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar (ainda não enviada ao comitê)">
+                <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
                     <i class="bi bi-pencil-square"></i> Editar
                 </button>
             `;
@@ -709,36 +741,30 @@ function atualizarTabelaRegistros() {
                 <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir (Admin)">
                     <i class="bi bi-trash3-fill"></i>
                 </button>
-                <button onclick="abrirModalEditarPorcentagem('${registro.id}')" class="button-editar" style="color: #d97706; margin-left: 4px;" title="Ajustar Porcentagem">
-                    <i class="bi bi-percent"></i>
-                </button>
             `;
         } 
-        else if (modoVisualizacao === "meus_rascunhos" && registro.criadoPor === usuarioLogado?.email && (registro.status === "Rascunho" || registro.status === "Pendente")) {
+        else if (registro.status === "Enviado") {
+            botoesAcao = `
+                <button onclick="abrirDetalheAvaliacao('${registro.id}')" class="button-editar" style="color: #3b82f6;" title="Apenas Visualizar">
+                    <i class="bi bi-eye-fill"></i> Ver
+                </button>
+            `;
+        }
+        else if (modoVisualizacao === "meus_rascunhos" && (registro.status === "Rascunho" || registro.status === "Pendente")) {
             let botaoEnviar = registro.status === "Rascunho" ? `
                 <button onclick="enviarRegistroDireto('${registro.id}')" class="button-editar" style="color: #16a34a;" title="Enviar para Comitê">
                     <i class="bi bi-send-fill"></i>
                 </button>
             ` : "";
 
-            let botaoExcluir = registro.versaoAnteriorId ? "" : `
-                <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir">
-                    <i class="bi bi-trash3-fill"></i>
-                </button>
-            `;
-
             botoesAcao = `
                 ${botaoEnviar}
                 <button onclick="editarRegistro('${registro.id}')" class="button-editar" title="Editar">
                     <i class="bi bi-pencil-square"></i>
                 </button>
-                ${botaoExcluir}
-            `;
-        } 
-        else if (esComite && registro.status === "Enviado") {
-            botoesAcao = `
-                <button onclick="avaliarAcao('${registro.id}', 'Aprovado')" class="button-aprovar" title="Aprovar">Aprovar</button>
-                <button onclick="avaliarAcao('${registro.id}', 'Reprovado')" class="button-reprovar" title="Reprovar">Reprovar</button>
+                <button onclick="excluirRegistro('${registro.id}')" class="button-excluir" title="Excluir">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
             `;
         } 
         else {
@@ -754,15 +780,13 @@ function atualizarTabelaRegistros() {
             colunaAcoes = registro.acoesEstrategicas.map(a => 
                 `<div><strong>${a.id}</strong> ${a.diretriz}</div>`
             ).join('');
-        } else if (registro.acaoEstrategicaId) {
-            colunaAcoes = `<div><strong>${registro.acaoEstrategicaId}</strong> ${registro.acaoEstrategicaDiretriz || ''}</div>`;
         } else {
             colunaAcoes = "-";
         }
 
         let idExibicao = registro.id;
         if (registro.versaoAnteriorId) {
-            idExibicao += ` <span style="font-size:0.75rem; color:#2563eb;" title="Acréscimo gerado a partir de ${registro.versaoAnteriorId}">(Acréscimo)</span>`;
+            idExibicao += ` <span style="font-size:0.75rem; color:#2563eb;">(Acréscimo)</span>`;
         }
         const nomeExibicao = registro.nome ? escaparTexto(registro.nome) : `<span style="color:#94a3b8;">(sem nome)</span>`;
 
@@ -803,24 +827,28 @@ function renderizarTabelaAdminGestaoDados() {
             acoesTexto = reg.acoesEstrategicas.map(a => `<strong>${a.id}</strong>`).join(', ');
         }
 
+        const badgeClasse = {
+            "Rascunho": "badge-rascunho", 
+            "Enviado": "badge-enviado",
+            "Pendente": "badge-pendente", 
+            "Aprovado": "badge-aprovado"
+        }[reg.status] || "badge-rascunho";
+
         tr.innerHTML = `
             <td><strong>${reg.nome ? escaparTexto(reg.nome) : '<span style="color:#94a3b8;">(sem nome)</span>'}</strong></td>
             <td>${reg.id}</td>
             <td>${acoesTexto}</td>
             <td>${escaparTexto(reg.oque ? reg.oque.substring(0, 50) + "..." : "-")}</td>
             <td><strong>${reg.percentual || 0}%</strong></td>
-            <td>
-                <select class="form-control" style="padding: 4px; font-size: 0.85rem; border-radius: 4px;" onchange="adminAlterarStatus('${reg.id}', this.value)">
+            <td><span class="${badgeClasse}">${reg.status}</span></td>
+            <td>${escaparTexto(reg.criadoPor || "-")}</td>
+            <td style="white-space: nowrap;">
+                <select class="form-control" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #fff; cursor: pointer;" onchange="adminAlterarStatus('${reg.id}', this.value)" title="Mudar Status da Matriz">
                     <option value="Rascunho" ${reg.status === 'Rascunho' ? 'selected' : ''}>Rascunho</option>
                     <option value="Enviado" ${reg.status === 'Enviado' ? 'selected' : ''}>Enviado (Comitê)</option>
                     <option value="Aprovado" ${reg.status === 'Aprovado' ? 'selected' : ''}>Aprovado</option>
                     <option value="Pendente" ${reg.status === 'Pendente' ? 'selected' : ''}>Pendente (Correção)</option>
                 </select>
-            </td>
-            <td>${escaparTexto(reg.criadoPor || "-")}</td>
-            <td style="white-space: nowrap; display: flex; gap: 6px; align-items: center;">
-                <button class="button-editar" style="color: #3b82f6;" title="Ajustar Porcentagem" onclick="abrirModalEditarPorcentagem('${reg.id}')"><i class="bi bi-percent"></i></button>
-                <button class="button-excluir" title="Excluir Definitivamente" onclick="excluirRegistroAdmin('${reg.id}')"><i class="bi bi-trash3-fill"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -848,85 +876,6 @@ window.adminAlterarStatus = async function(id, novoStatus) {
 
     renderizarTabelaAdminGestaoDados();
     if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
-};
-
-window.excluirRegistroAdmin = async function(id) {
-    const index = registros.findIndex(r => r.id === id);
-    if (index === -1) return;
-
-    const result = await Swal.fire({
-        title: 'Excluir registro?',
-        text: `Deseja apagar definitivamente o registro ID ${id} do sistema e do dashboard?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar'
-    });
-
-    if (result.isConfirmed) {
-        registros.splice(index, 1);
-        salvarBanco();
-
-        if (typeof atualizarDashboard === 'function') {
-            atualizarDashboard();
-        }
-
-        Swal.fire({ icon: 'success', title: 'Excluído!', timer: 1500, showConfirmButton: false });
-        renderizarTabelaAdminGestaoDados();
-        if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
-    }
-};
-
-window.abrirModalEditarPorcentagem = async function(idRegistro) {
-    if (!usuarioLogado || usuarioLogado.role !== 'admin') {
-        Swal.fire('Acesso negado', 'Apenas administradores podem ajustar percentuais.', 'error');
-        return;
-    }
-
-    const registro = registros.find(r => r.id === idRegistro);
-    if (!registro) return;
-
-    const { value: novoPercentual } = await Swal.fire({
-        title: 'Ajustar Porcentagem da Matriz',
-        text: `${registro.nome || 'Sem nome'} (ID: ${registro.id}) - O quê: ${registro.oque}`,
-        input: 'number',
-        inputAttributes: { min: 0, max: 100, step: 1 },
-        inputValue: registro.percentual || 0,
-        showCancelButton: true,
-        confirmButtonText: 'Salvar Ajuste',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#2563eb'
-    });
-
-    if (novoPercentual !== undefined) {
-        const valorNumerico = parseFloat(novoPercentual);
-        if (isNaN(valorNumerico) || valorNumerico < 0 || valorNumerico > 100) {
-            Swal.fire('Valor inválido', 'Digite uma porcentagem entre 0 e 100.', 'warning');
-            return;
-        }
-
-        registro.percentual = valorNumerico;
-        salvarBanco();
-
-        if (typeof atualizarDashboard === 'function') {
-            atualizarDashboard();
-        }
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Porcentagem atualizada!',
-            text: `O novo progresso desta matriz foi alterado para ${valorNumerico}%.`,
-            timer: 2000,
-            showConfirmButton: false
-        });
-
-        if (document.getElementById("tabAdminGestaoDados") && document.getElementById("tabAdminGestaoDados").style.display === "block") {
-            renderizarTabelaAdminGestaoDados();
-        }
-        if (tabelaRegistros.style.display === "block") atualizarTabelaRegistros();
-    }
 };
 
 window.avaliarAcao = async function(id, novoStatus) {
@@ -1131,7 +1080,6 @@ window.abrirDetalheAvaliacao = function(id) {
             </div>
         `;
     } else if (podeAvaliar) {
-        // === [ AQUI ESTÁ A CORREÇÃO DE Z-INDEX COM AVISO INLINE ] ===
         blocoParecerOuAcoes = `
             <div class="detalhe-avaliacao-form">
                 <label for="modalParecerInput">Parecer / Justificativa da decisão</label>
@@ -1212,7 +1160,6 @@ window.abrirDetalheAvaliacao = function(id) {
     modalAvaliacao.style.display = 'flex';
 };
 
-// === [ AQUI ESTÁ A CORREÇÃO DE VALIDAÇÃO INLINE ] ===
 window.confirmarAvaliacaoModal = async function(id, novoStatus) {
     const textarea = document.getElementById('modalParecerInput');
     const erroSpan = document.getElementById('modalParecerErro');
@@ -1224,7 +1171,6 @@ window.confirmarAvaliacaoModal = async function(id, novoStatus) {
         return;
     }
 
-    // Se o usuário preencheu corretamente, oculta a mensagem de erro
     if (erroSpan) erroSpan.style.display = 'none';
     if (textarea) textarea.style.borderColor = '';
 
@@ -1825,12 +1771,14 @@ adminTabs.forEach(tab => {
 
 function renderizarTabelaAdminErros() {
     const tbody = document.getElementById("adminErrosBody");
+    const divAviso = document.getElementById("dashboardAvisoQualidade");
     if (!tbody) return;
+    
     tbody.innerHTML = "";
-
-    const erros = [];
+    const errosDetectados = [];
     const agora = new Date().toLocaleString();
 
+    // 1. Verificar integridade das Ações Base (Duplicidade de IDs)
     const acoes = window.acoesEstrategicas || [];
     const idsVistos = new Set();
     const duplicadas = new Set();
@@ -1844,23 +1792,74 @@ function renderizarTabelaAdminErros() {
     });
 
     duplicadas.forEach(id => {
-        erros.push({
-            msg: `Ação Base duplicada detectada no banco de dados. ID em conflito: ${id}`,
-            stack: "Fonte: acoes_data.js -> array acoesEstrategicas"
+        errosDetectados.push({
+            tipo: "Duplicidade",
+            mensagem: `Ação Base duplicada detectada no banco de dados. ID em conflito: ${id}`,
+            origem: "acoes_data.js -> array acoesEstrategicas",
+            severidade: "Alta"
         });
     });
 
-    if (erros.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="table-empty-state" style="color: #16a34a;">Nenhum erro de integridade encontrado. O banco de dados está saudável! 🎉</td></tr>`;
+    // 2. Verificar integridade dos Registros salvos no localStorage
+    try {
+        const dadosLocais = JSON.parse(localStorage.getItem("siscetran_db"));
+        if (!dadosLocais || !Array.isArray(dadosLocais.registros)) {
+            errosDetectados.push({
+                tipo: "Estrutura",
+                mensagem: "O objeto principal 'siscetran_db' no localStorage está corrompido ou sem a chave de registros.",
+                origem: "localStorage -> siscetran_db",
+                severidade: "Crítica"
+            });
+        } else {
+            dadosLocais.registros.forEach((reg, index) => {
+                if (!reg.oque || !reg.porque || reg.percentual === undefined) {
+                    errosDetectados.push({
+                        tipo: "Qualidade de Dados",
+                        mensagem: `Matriz ID ${reg.id || index} ("${reg.nome || 'Sem nome'}") possui campos essenciais em branco.`,
+                        origem: "localStorage -> registros",
+                        severidade: "Média"
+                    });
+                }
+            });
+        }
+    } catch (e) {
+        errosDetectados.push({
+            tipo: "JSON Parse",
+            mensagem: "Falha crítica ao decodificar o banco de dados local (JSON malformado).",
+            origem: "localStorage",
+            severidade: "Crítica"
+        });
+    }
+
+    // 3. Renderizar na Tabela de Erros
+    if (errosDetectados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="table-empty-state" style="color: #16a34a; text-align: center; padding: 30px;">
+                    <i class="bi bi-check-circle-fill" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                    <strong>Nenhum erro de integridade ou anomalia encontrada. O sistema está 100% saudável! 🎉</strong>
+                </td>
+            </tr>
+        `;
+        if (divAviso) divAviso.style.display = "none";
         return;
     }
 
-    erros.forEach(erro => {
+    if (divAviso) {
+        divAviso.style.display = "block";
+        divAviso.innerHTML = `⚠️ Atenção: Foram encontradas <strong>${errosDetectados.length}</strong> inconsistência(s) que exigem verificação da equipe técnica.`;
+    }
+
+    errosDetectados.forEach(erro => {
         const tr = document.createElement("tr");
+        let corSeveridade = "#e63946"; 
+        if (erro.severidade === "Média") corSeveridade = "#d97706"; 
+
         tr.innerHTML = `
             <td>${agora}</td>
-            <td style="color: #e63946;"><strong><i class="bi bi-exclamation-triangle-fill"></i> ${erro.msg}</strong></td>
-            <td><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${erro.stack}</code></td>
+            <td><span class="badge-reprovado" style="background-color: ${corSeveridade}; font-size: 0.75rem;">${erro.tipo} (${erro.severidade})</span></td>
+            <td style="color: #1e293b;"><strong>${erro.mensagem}</strong></td>
+            <td><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; color: #475569;">${erro.origem}</code></td>
         `;
         tbody.appendChild(tr);
     });

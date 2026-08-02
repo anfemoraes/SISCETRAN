@@ -213,3 +213,116 @@ if (btnLimparDash) {
         window.atualizarDashboard();
     });
 }
+// ==========================================================================
+// FUNÇÕES DE EXPORTAÇÃO (EXCEL E CSV)
+// ==========================================================================
+
+function obterMatrizesParaExportar() {
+    if (typeof ultimasMatrizesRenderizadas !== 'undefined' && ultimasMatrizesRenderizadas.length > 0) {
+        return ultimasMatrizesRenderizadas;
+    }
+    const dadosSalvos = JSON.parse(localStorage.getItem("siscetran_db"));
+    const registrosDB = (dadosSalvos && Array.isArray(dadosSalvos.registros)) ? dadosSalvos.registros : (window.registros || []);
+    return registrosDB.filter(m => m.status === "Aprovado");
+}
+
+function montarLinhasExportacao(matrizes) {
+    const acoesBase = window.acoesEstrategicas || [];
+    return matrizes.map(m => {
+        const primeiraAcaoBase = Array.isArray(m.acoesEstrategicas) && m.acoesEstrategicas.length > 0
+            ? acoesBase.find(a => a.id === m.acoesEstrategicas[0].id)
+            : null;
+
+        return {
+            "Nome da Matriz": m.nome || "(sem nome)",
+            "Matriz (ID)": m.id,
+            "Ações Vinculadas": Array.isArray(m.acoesEstrategicas) ? m.acoesEstrategicas.map(a => a.id).join(", ") : "-",
+            "O quê": m.oque || "-",
+            "Por quê": m.porque || "-",
+            "Como": m.como || "-",
+            "Quando": m.quando || "-",
+            "Onde": m.onde || "-",
+            "Quanto": m.quanto || "-",
+            "Impacto": m.impacto || "-",
+            "Observação": m.observacao || "-",
+            "Setor Responsável": primeiraAcaoBase ? (primeiraAcaoBase.setor || "Não informado") : "Não informado",
+            "Meta": primeiraAcaoBase ? (primeiraAcaoBase.meta || "-") : "-",
+            "Indicador de Desempenho": primeiraAcaoBase ? (primeiraAcaoBase.indicador || "-") : "-",
+            "% Concluído": m.percentual || 0,
+            "Status": m.status,
+            "Avaliado Por": m.avaliadoPor || "-",
+            "Data de Avaliação": m.dataAvaliacao || "-",
+            "Comentário do Comitê": m.comentarioComite || "-",
+            "Criado Por": m.criadoPor || "-",
+            "Data de Criação": m.dataCriacao || "-"
+        };
+    });
+}
+
+window.exportarMatrizesAprovadasParaExcel = function() {
+    if (typeof XLSX === 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Biblioteca indisponível',
+            text: 'A biblioteca SheetJS (xlsx) não carregou. Verifique sua conexão.',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
+    const matrizes = obterMatrizesParaExportar();
+    if (matrizes.length === 0) {
+        Swal.fire({ icon: 'info', title: 'Nada para exportar', text: 'Não há matrizes para o filtro atual.', confirmButtonColor: '#2563eb' });
+        return;
+    }
+
+    const linhas = montarLinhasExportacao(matrizes);
+    const planilha = XLSX.utils.json_to_sheet(linhas);
+    const livro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(livro, planilha, "Matrizes Aprovadas");
+
+    const dataHoje = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(livro, `siscetran_matrizes_aprovadas_${dataHoje}.xlsx`);
+};
+
+window.exportarMatrizesAprovadasParaCSV = function() {
+    const matrizes = obterMatrizesParaExportar();
+    if (matrizes.length === 0) {
+        Swal.fire({ icon: 'info', title: 'Nada para exportar', text: 'Não há matrizes para o filtro atual.', confirmButtonColor: '#2563eb' });
+        return;
+    }
+
+    const linhas = montarLinhasExportacao(matrizes);
+    const colunas = Object.keys(linhas[0]);
+
+    const escaparCampoCSV = (valor) => {
+        const texto = String(valor === undefined || valor === null ? "" : valor).replace(/"/g, '""');
+        return `"${texto}"`;
+    };
+
+    const linhasCSV = [
+        colunas.map(escaparCampoCSV).join(";"),
+        ...linhas.map(linha => colunas.map(c => escaparCampoCSV(linha[c])).join(";"))
+    ];
+    const conteudoCSV = "\uFEFF" + linhasCSV.join("\r\n");
+
+    const blob = new Blob([conteudoCSV], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dataHoje = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `siscetran_matrizes_aprovadas_${dataHoje}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
+// Vinculação automática aos botões do HTML se existirem na tela
+document.addEventListener("DOMContentLoaded", () => {
+    const btnExcel = document.getElementById("btnExportarAprovadas");
+    const btnCSV = document.getElementById("btnExportarAprovadasCSV");
+
+    if (btnExcel) btnExcel.onclick = window.exportarMatrizesAprovadasParaExcel;
+    if (btnCSV) btnCSV.onclick = window.exportarMatrizesAprovadasParaCSV;
+});
