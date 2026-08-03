@@ -3,33 +3,32 @@
    ========================================================================== */
 :root {
   --font-size: 15px;
-  --background: #f8f9fa; /* Cinza bem claro institucional para o fundo */
-  --foreground: #333333; /* Texto escuro com bom contraste */
-  --card: #ffffff;      /* Cards e containers agora são brancos e limpos */
-  --top: #ffffff;        /* Header totalmente branco */
+  --background: #f8f9fa;
+  --foreground: #333333;
+  --card: #ffffff;      
+  --top: #ffffff;        
   --card-foreground: #333333;
   --popover: #ffffff;
   --popover-foreground: #333333;
-  --primary: #0056b3;    /* Azul Oficial Detran */
-  --primary-hover: #004085; /* Azul Escuro para interações */
-  --primary-dark: #003366;  /* Azul de destaque para títulos principais */
-  --secondary: #f4f6f8;  /* Fundo de tabelas e elementos neutros */
+  --primary: #0056b3;    
+  --primary-hover: #004085; 
+  --primary-dark: #003366;  
+  --secondary: #f4f6f8;  
   --secondary-foreground: #495057;
   --muted: #e9ecef;
   --muted-foreground: #6c757d;
-  --accent: #28a745;     /* Verde de sucesso para conclusões/consultas */
+  --accent: #28a745;     
   --accent-hover: #218838;
   --destructive: #dc3545;
   --destructive-foreground: #ffffff;
-  --border: #dee2e6;     /* Linhas divisórias muito mais sutis */
+  --border: #dee2e6;     
   --input-background: #ffffff;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
   --ring: rgba(0, 86, 179, 0.15);
-  --radius: 0.75rem;     /* Cantos arredondados suavizados modernos */
+  --radius: 0.75rem;     
 }
 
-/* O modo dark foi suavizado para manter a sobriedade */
 .dark {
   --background: #121212;
   --foreground: #e0e0e0;
@@ -42,9 +41,6 @@
   --primary-dark: #66b2ff;
 }
 
-/* ==========================================================================
-   2. ESTILOS BASE
-   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -63,20 +59,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-
   background:
-    radial-gradient(
-      circle at 10% 20%,
-      rgba(0, 86, 179, 0.06),
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 90% 80%,
-      rgba(40, 167, 69, 0.04),
-      transparent 25%
-    ),
+    radial-gradient(circle at 10% 20%, rgba(0, 86, 179, 0.06), transparent 25%),
+    radial-gradient(circle at 90% 80%, rgba(40, 167, 69, 0.04), transparent 25%),
     #f8f9fa;
-
   color: var(--foreground);
   line-height: 1.6;
 }
@@ -204,9 +190,8 @@ label {
   transform: translateY(-2px);
 }
 
-/* Containers principais ajustados para cartões flutuantes */
-.acoes-table-container, .formulario-container, #registroView {
-  max-width: 1300px;
+.acoes-table-container, .formulario-container, #registroView, .comite-container, .dashboard-container, #adminView {
+  max-width: 1200px;
   width: 100%;
   margin: 2rem auto;
   padding: 2rem;
@@ -214,6 +199,34 @@ label {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* PADRÃO DE CABEÇALHO UNIFICADO PARA TODOS OS PAINÉIS (CORREÇÃO MOBILE DO BOTÃO VOLTAR) */
+.padrao-header, .comite-header, .dashboard-header {
+  display: grid;
+  grid-template-columns: 180px 1fr 180px;
+  align-items: center;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.padrao-header > button:first-child,
+.comite-header > button:first-child,
+.dashboard-header > button:first-child {
+  justify-self: start;
+}
+
+.padrao-header > div:nth-child(2),
+.comite-header > div:nth-child(2),
+.dashboard-header-title {
+  text-align: center;
+  grid-column: 2;
+}
+
+.padrao-header h2, .comite-header h2, .dashboard-header-title h2 {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* ==========================================================================
@@ -318,162 +331,6 @@ input:focus, textarea:focus, select:focus {
 }
 
 .admin-tabela tr:last-child td { border-bottom: none; }
-
-.import-instrucoes {
-  background-color: #eff6ff;
-  border-left: 4px solid var(--primary);
-  padding: 1rem 1.25rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.import-instrucoes p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--foreground);
-}
-
-.import-instrucoes code {
-  background-color: #ffffff;
-  padding: 0.1rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
-}
-
-.import-upload {
-  margin-bottom: 1rem;
-}
-
-.import-upload input[type="file"] {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #ffffff;
-  border: 1px dashed var(--border);
-  border-radius: 0.5rem;
-}
-
-.import-resumo {
-  font-size: 0.9rem;
-  color: var(--muted-foreground);
-  margin-bottom: 0.75rem;
-}
-
-#btnConfirmarImportacao:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ==========================================================================
-   15. PERCENTUAL DE IMPACTO (FORMULÁRIO)
-   ========================================================================== */
-.impacto-percentual-card {
-  background-color: #fff7ed;
-  border: 1px solid #fed7aa;
-}
-
-.label-hint {
-  text-transform: none;
-  font-weight: 500;
-  font-size: 0.75rem;
-  letter-spacing: normal;
-  color: var(--muted-foreground);
-  margin-left: 0.4rem;
-}
-
-.impacto-slider-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.impacto-slider-wrapper input[type="range"] {
-  flex-grow: 1;
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(to right, #fb923c 0%, #fb923c var(--impacto-fill, 0%), #fed7aa var(--impacto-fill, 0%), #fed7aa 100%);
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
-.impacto-slider-wrapper input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  border: 3px solid #ea580c;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.impacto-slider-wrapper input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  border: 3px solid #ea580c;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.impacto-slider-valor-box {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  background-color: #ffffff;
-  border: 1px solid #fed7aa;
-  border-radius: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  min-width: 90px;
-}
-
-.impacto-slider-valor-box input[type="number"] {
-  width: 100%;
-  border: none;
-  padding: 0;
-  text-align: right;
-  font-weight: 700;
-  font-size: 1rem;
-  color: #ea580c;
-}
-
-.impacto-slider-valor-box input[type="number"]:focus {
-  box-shadow: none;
-}
-
-.impacto-slider-valor-box span {
-  font-weight: 700;
-  color: #ea580c;
-}
-
-.impacto-slider-legendas {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  margin-top: 0.5rem;
-}
-
-.impacto-percentual-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-weight: 700;
-  color: #ea580c;
-}
-
-@media (max-width: 600px) {
-  .impacto-slider-legendas span:nth-child(2) { display: none; }
-}
 
 .card {
   background-color: var(--secondary);
@@ -732,11 +589,11 @@ tr:hover td {
 }
 
 /* ==========================================================================
-   11. MEDIA QUERIES
+   11. MEDIA QUERIES (RESPONSIVIDADE UNIFICADA PARA CABEÇALHOS)
    ========================================================================== */
 @media (max-width: 1366px) {
   .acoes-table-container, .formulario-container, #registroView,
-  .comite-container {
+  .comite-container, .dashboard-container, #adminView {
     max-width: 96%;
   }
 }
@@ -744,7 +601,7 @@ tr:hover td {
 @media (max-width: 992px) {
   .container { padding: 0 1rem; }
   .actions-menu .button { min-width: 200px; flex: 1 1 200px; }
-  .acoes-table-container, .formulario-container, #registroView, .comite-container {
+  .acoes-table-container, .formulario-container, #registroView, .comite-container, .dashboard-container, #adminView {
     padding: 1.5rem;
     margin: 1.5rem auto;
   }
@@ -761,7 +618,7 @@ tr:hover td {
   .login-container { margin: 0 auto; width: 100%; display: flex; justify-content: center; gap: 8px !important; }
   .actions-menu { flex-direction: column; }
   .actions-menu .button { width: 100%; min-width: unset; flex: unset; }
-  .acoes-table-container, .formulario-container, #registroView { width: auto; padding: 1rem; margin: 1rem; }
+  .acoes-table-container, .formulario-container, #registroView, .comite-container, .dashboard-container, #adminView { width: auto; padding: 1rem; margin: 1rem; }
   .hero-text h1 { font-size: 1.75rem; }
   .hero-text h2 { font-size: 1rem; }
   .actions { flex-direction: column-reverse; }
@@ -784,6 +641,20 @@ tr:hover td {
 
   .form-grid { grid-template-columns: 1fr; }
   .admin-tabela-wrapper { overflow-x: auto; }
+
+  /* Responsividade mobile unificada para todos os cabeçalhos de voltar */
+  .padrao-header, .comite-header, .dashboard-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    text-align: center;
+  }
+  .padrao-header > button:first-child,
+  .comite-header > button:first-child,
+  .dashboard-header > button:first-child {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -800,7 +671,7 @@ tr:hover td {
 }
 
 /* ==========================================================================
-   12. BOTÕES DE AVALIAÇÃO (TABELA DE CONSULTA GERAL)
+   12. BOTÕES DE AVALIAÇÃO
    ========================================================================== */
 .button-aprovar, .button-reprovar {
   display: inline-flex;
@@ -817,14 +688,10 @@ tr:hover td {
   margin-right: 0.4rem;
 }
 
-.button-aprovar {
-  background-color: var(--accent);
-}
+.button-aprovar { background-color: var(--accent); }
 .button-aprovar:hover { background-color: var(--accent-hover); }
 
-.button-reprovar {
-  background-color: var(--destructive);
-}
+.button-reprovar { background-color: var(--destructive); }
 .button-reprovar:hover { background-color: #c82333; }
 
 /* ==========================================================================
@@ -838,38 +705,6 @@ tr:hover td {
 .button-comite:hover {
   background-color: #f5f3ff !important;
   transform: translateY(-2px);
-}
-
-.comite-container {
-  max-width: 1300px;
-  width: 100%;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.comite-header {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  position: relative;
-  margin-bottom: 2rem;
-  text-align: center;
-  width: 100%;
-}
-
-.comite-header > button:first-child {
-  position: absolute;
-  left: 0;
-}
-
-.comite-header h2 {
-  border: none;
-  padding: 0;
-  margin: 0;
 }
 
 .comite-stats-grid {
@@ -1125,28 +960,6 @@ tr:hover td {
 .button-reprovar-modal { background-color: var(--destructive); }
 .button-reprovar-modal:hover { background-color: #c82333; }
 
-/* Ajuste Responsivo do Comitê para Celular */
-@media (max-width: 768px) {
-  .comite-container { width: auto; padding: 1rem; margin: 1rem; }
-  
-  .comite-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-    position: static; 
-    text-align: center;
-  }
-
-  .comite-header > button:first-child {
-    position: static;
-    width: 100%; 
-  }
-
-  .comite-cards-grid { grid-template-columns: 1fr; }
-  .detalhe-avaliacao-botoes { flex-direction: column-reverse; }
-  .detalhe-avaliacao-botoes button { width: 100%; }
-}
-
 .button-editar,
 .button-excluir{
     background:transparent;
@@ -1157,23 +970,11 @@ tr:hover td {
     transition:.25s;
 }
 
-.button-editar{
-    color:#0d6efd;
-}
+.button-editar{ color:#0d6efd; }
+.button-editar:hover{ transform:scale(1.2); color:#084298; }
 
-.button-editar:hover{
-    transform:scale(1.2);
-    color:#084298;
-}
-
-.button-excluir{
-    color:#dc3545;
-}
-
-.button-excluir:hover{
-    transform:scale(1.2);
-    color:#b02a37;
-}
+.button-excluir{ color:#dc3545; }
+.button-excluir:hover{ transform:scale(1.2); color:#b02a37; }
 
 td span[class*="badge"], 
 td span[class*="status"],
@@ -1192,32 +993,7 @@ td span[class*="status"],
     margin-top: 2rem;              
 }
 
-.footer p {
-    margin: 0;
-}
-
-/* ==========================================================================
-   CENTRALIZAÇÃO DO PAINEL DE ADMINISTRAÇÃO
-   ========================================================================== */
-#adminView {
-    max-width: 1200px;
-    margin: 0 auto; 
-    padding: 2rem 1rem;
-}
-
-#adminView .comite-header {
-    display: flex;
-    align-items: center;
-    justify-content: center; 
-    position: relative;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-#btnVoltarAcoesDoAdmin {
-    position: absolute;
-    left: 0; 
-}
+.footer p { margin: 0; }
 
 #adminTabs {
     display: flex;
@@ -1225,55 +1001,6 @@ td span[class*="status"],
     gap: 1rem;
     margin-bottom: 2rem;
     flex-wrap: wrap; 
-}
-
-/* ==========================================================================
-   CENTRALIZAÇÃO GERAL DOS PAINÉIS
-   ========================================================================== */
-#acoesTableContainer, 
-#formularioContainer, 
-#registroView, 
-#comiteView, 
-#andamentoView {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-}
-
-#acoesTableContainer > h2, 
-#acoesTableContainer > p,
-#formularioContainer > h2 {
-    text-align: center;
-}
-
-.dashboard-header {
-    display: grid;
-    grid-template-columns: 200px 1fr 200px; 
-    align-items: center;
-    margin-bottom: 2rem;
-    width: 100%;
-}
-.dashboard-header > button:first-child {
-    justify-self: start; 
-}
-.dashboard-header-title {
-    text-align: center;
-    grid-column: 2; 
-}
-
-#registroView {
-    position: relative;
-}
-#registroView h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding-top: 0.5rem;
-}
-#registroView > div:nth-child(2) {
-    position: absolute;
-    top: 2rem;
-    left: 1rem;
-    margin: 0 !important; 
 }
 
 .comite-filtros, 
